@@ -2,6 +2,7 @@ import type {
   AuthResponse,
   ChatRequest,
   ChatResponse,
+  DashboardResponse,
   LoginRequest,
 } from "@playable-factory/shared";
 
@@ -84,6 +85,16 @@ export function askQuestion(
     {
       method: "POST",
       body: JSON.stringify(payload),
+    },
+    true,
+  );
+}
+
+export function getDashboard(): Promise<DashboardResponse> {
+  return request<DashboardResponse>(
+    "/api/admin/dashboard",
+    {
+      method: "GET",
     },
     true,
   );
