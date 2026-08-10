@@ -1,12 +1,12 @@
 import type { SearchResponse } from "@playable-factory/shared";
 import { Router } from "express";
 
-import { requireAuth } from "../middleware/auth-middleware.js";
+import { requireSearchAccess } from "../middleware/search-auth-middleware.js";
 import { searchDocuments } from "../services/retrieval-service.js";
 
 export const searchRouter = Router();
 
-searchRouter.post("/", requireAuth, async (req, res) => {
+searchRouter.post("/", requireSearchAccess, async (req, res) => {
   try {
     const query =
       typeof req.body?.query === "string"
