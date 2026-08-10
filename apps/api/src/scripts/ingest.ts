@@ -1,0 +1,23 @@
+import { pool } from "../db/index.js";
+import { ingestCorpus } from "../services/ingestion-service.js";
+
+try {
+  console.log("Starting corpus ingestion...");
+
+  const result = await ingestCorpus();
+
+  console.log("");
+  console.log("Ingestion finished");
+  console.log(`Run ID: ${result.runId}`);
+  console.log(`Documents processed: ${result.documentsProcessed}`);
+  console.log(`Documents failed: ${result.documentsFailed}`);
+
+  if (result.documentsFailed > 0) {
+    process.exitCode = 1;
+  }
+} catch (error) {
+  console.error("Corpus ingestion failed:", error);
+  process.exitCode = 1;
+} finally {
+  await pool.end();
+}

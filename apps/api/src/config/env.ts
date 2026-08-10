@@ -15,14 +15,13 @@ export const env = {
   databaseUrl: process.env.DATABASE_URL,
   port: Number(process.env.PORT ?? 4000),
 
-  ollamaBaseUrl:
-    process.env.OLLAMA_BASE_URL ?? "http://127.0.0.1:11434",
+  geminiApiKey: process.env.GEMINI_API_KEY,
 
-  ollamaEmbeddingModel:
-    process.env.OLLAMA_EMBEDDING_MODEL ?? "embeddinggemma",
+  geminiEmbeddingModel:
+    process.env.GEMINI_EMBEDDING_MODEL ?? "gemini-embedding-001",
 
-  ollamaChatModel:
-    process.env.OLLAMA_CHAT_MODEL ?? "qwen3:4b-instruct",
+  geminiChatModel:
+    process.env.GEMINI_CHAT_MODEL ?? "gemini-2.5-flash",
 
   corpusPath: path.resolve(
     rootDir,

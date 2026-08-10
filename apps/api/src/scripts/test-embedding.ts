@@ -1,4 +1,4 @@
-import { generateEmbedding } from "../services/embedding.service.js";
+import { generateEmbedding } from "../services/embedding-service.js";
 
 const embedding = await generateEmbedding(
   "How do I initialize the Lumen SDK?",

@@ -11,15 +11,16 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "test:embedding": "tsx src/scripts/test-embedding.ts",
-    "test:corpus": "tsx src/scripts/test-corpus.ts"
+    "test:corpus": "tsx src/scripts/test-corpus.ts",
+    "ingest": "tsx src/scripts/ingest.ts"
   },
   "dependencies": {
+    "@google/genai": "^2.16.0",
     "@playable-factory/shared": "workspace:*",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
-    "ollama": "^0.6.3",
     "pg": "^8.23.0"
   },
   "devDependencies": {
