@@ -6,8 +6,16 @@ import { chatRouter } from "./routes/chat-route.js";
 import { adminRouter } from "./routes/admin-route.js";
 import { searchRouter } from "./routes/search-route.js";
 
+import cors from "cors";
+
 const app = express();
 const port = process.env.PORT ?? 4000;
+
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  }),
+);
 
 app.use(express.json());
 app.use("/api/auth", authRouter);

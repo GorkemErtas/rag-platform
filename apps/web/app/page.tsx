@@ -1,6 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { login } from "@/lib/api";
+import { saveAuthSession } from "@/lib/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -8,22 +11,40 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit(
+  event: FormEvent<HTMLFormElement>,
+) {
+  event.preventDefault();
 
-    setError("");
-    setIsLoading(true);
+  setError("");
+  setIsLoading(true);
 
-    try {
-      // API integration comes in the next step.
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    } catch {
-      setError("Unable to sign in. Please try again.");
-    } finally {
-      setIsLoading(false);
+  try {
+    const result = await login({
+      email,
+      password,
+    });
+
+    saveAuthSession(result);
+
+    if (result.user.role === "ADMIN") {
+      router.push("/admin");
+      return;
     }
+
+    router.push("/chat");
+  } catch (error) {
+    if (error instanceof Error) {
+      setError(error.message);
+    } else {
+      setError("Unable to sign in. Please try again.");
+    }
+  } finally {
+    setIsLoading(false);
   }
+}
 
   return (
     <main className="relative flex min-h-screen overflow-hidden">
