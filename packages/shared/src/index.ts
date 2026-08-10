@@ -17,3 +17,20 @@ export interface SearchResponse {
   query: string;
   results: SearchResult[];
 }
+
+export interface ChatRequest {
+  question: string;
+}
+
+export interface ChatSource {
+  path: string;
+  title: string | null;
+  chunkIndex: number;
+  similarity: number;
+}
+
+export interface ChatResponse {
+  answer: string;
+  answered: boolean;
+  sources: ChatSource[];
+}
