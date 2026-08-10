@@ -7,6 +7,7 @@ import {
   boolean,
   pgEnum,
   uniqueIndex,
+  vector,
 } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN"]);
@@ -60,6 +61,9 @@ export const documentChunks = pgTable(
     chunkIndex: integer("chunk_index").notNull(),
     content: text("content").notNull(),
     tokenCount: integer("token_count"),
+    embedding: vector("embedding", {
+      dimensions: 768,
+    }),
   },
   (table) => [
     uniqueIndex("document_chunks_document_chunk_idx").on(
