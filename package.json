@@ -1,0 +1,11 @@
+{
+  "name": "playable-factory-rag-case",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter @playable-factory/api dev",
+    "build": "pnpm -r build"
+  },
+  "packageManager": "pnpm@10.34.5"
+}
