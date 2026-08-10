@@ -29,7 +29,12 @@ export async function searchDocuments(
     throw new Error("Search limit must be between 1 and 20");
   }
 
-  const queryEmbedding = await generateEmbedding(normalizedQuery);
+  const queryEmbedding = await generateEmbedding(
+  normalizedQuery,
+  {
+    type: "query",
+  },
+);
 
   const similarity = sql<number>`
     1 - (${cosineDistance(

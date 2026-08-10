@@ -9,18 +9,49 @@ const ai = new GoogleGenAI({
   apiKey: env.geminiApiKey,
 });
 
+const EMBEDDING_DIMENSIONS = 768;
+
+type EmbeddingType = "document" | "query";
+
+interface GenerateEmbeddingOptions {
+  type: EmbeddingType;
+  title?: string;
+}
+
+function normalizeEmbedding(values: number[]): number[] {
+  const magnitude = Math.sqrt(
+    values.reduce((sum, value) => sum + value * value, 0),
+  );
+
+  if (magnitude === 0) {
+    throw new Error("Cannot normalize a zero embedding");
+  }
+
+  return values.map((value) => value / magnitude);
+}
+
 export async function generateEmbedding(
   text: string,
+  options: GenerateEmbeddingOptions,
 ): Promise<number[]> {
-  if (!text.trim()) {
+  const normalizedText = text.trim();
+
+  if (!normalizedText) {
     throw new Error("Cannot generate an embedding for empty text");
   }
 
   const response = await ai.models.embedContent({
     model: env.geminiEmbeddingModel,
-    contents: text,
+    contents: normalizedText,
     config: {
-      outputDimensionality: 768,
+      outputDimensionality: EMBEDDING_DIMENSIONS,
+      taskType:
+        options.type === "document"
+          ? "RETRIEVAL_DOCUMENT"
+          : "RETRIEVAL_QUERY",
+      ...(options.type === "document" && options.title
+        ? { title: options.title }
+        : {}),
     },
   });
 
@@ -30,11 +61,11 @@ export async function generateEmbedding(
     throw new Error("Gemini returned no embedding");
   }
 
-  if (embedding.length !== 768) {
+  if (embedding.length !== EMBEDDING_DIMENSIONS) {
     throw new Error(
       `Unexpected embedding dimension: ${embedding.length}`,
     );
   }
 
-  return embedding;
+  return normalizeEmbedding(embedding);
 }

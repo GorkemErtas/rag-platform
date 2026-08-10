@@ -21,7 +21,7 @@ export const env = {
     process.env.GEMINI_EMBEDDING_MODEL ?? "gemini-embedding-001",
 
   geminiChatModel:
-    process.env.GEMINI_CHAT_MODEL ?? "gemini-2.5-flash",
+    process.env.GEMINI_CHAT_MODEL ?? "gemini-3.6-flash",
 
   corpusPath: path.resolve(
     rootDir,
