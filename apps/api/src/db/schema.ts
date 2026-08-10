@@ -1,0 +1,96 @@
+import {
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  integer,
+  boolean,
+  pgEnum,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
+
+export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN"]);
+
+export const ingestionStatusEnum = pgEnum("ingestion_status", [
+  "PENDING",
+  "RUNNING",
+  "COMPLETED",
+  "FAILED",
+]);
+
+export const documentStatusEnum = pgEnum("document_status", [
+  "PENDING",
+  "INDEXED",
+  "FAILED",
+]);
+
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: userRoleEnum("role").notNull().default("USER"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const documents = pgTable("documents", {
+  id: serial("id").primaryKey(),
+  path: text("path").notNull().unique(),
+  title: text("title"),
+  checksum: text("checksum"),
+  status: documentStatusEnum("status").notNull().default("PENDING"),
+  errorMessage: text("error_message"),
+  indexedAt: timestamp("indexed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const documentChunks = pgTable(
+  "document_chunks",
+  {
+    id: serial("id").primaryKey(),
+    documentId: integer("document_id")
+      .notNull()
+      .references(() => documents.id, { onDelete: "cascade" }),
+    chunkIndex: integer("chunk_index").notNull(),
+    content: text("content").notNull(),
+    tokenCount: integer("token_count"),
+  },
+  (table) => [
+    uniqueIndex("document_chunks_document_chunk_idx").on(
+      table.documentId,
+      table.chunkIndex,
+    ),
+  ],
+);
+
+export const ingestionRuns = pgTable("ingestion_runs", {
+  id: serial("id").primaryKey(),
+  status: ingestionStatusEnum("status").notNull().default("PENDING"),
+  documentsProcessed: integer("documents_processed").notNull().default(0),
+  documentsFailed: integer("documents_failed").notNull().default(0),
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const searchLogs = pgTable("search_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  query: text("query").notNull(),
+  resultCount: integer("result_count").notNull().default(0),
+  answered: boolean("answered").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
