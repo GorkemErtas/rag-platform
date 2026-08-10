@@ -8,7 +8,7 @@ import type {
   DashboardResponse,
 } from "@playable-factory/shared";
 
-import { getDashboard } from "@/lib/api";
+import { getDashboard, runIngestion } from "@/lib/api";
 import {
   clearAuthSession,
   getAuthUser,
@@ -22,6 +22,8 @@ export default function AdminPage() {
     useState<DashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isIngesting, setIsIngesting] = useState(false);
+  const [ingestionMessage, setIngestionMessage] = useState("");
 
   useEffect(() => {
     const currentUser = getAuthUser();
@@ -67,6 +69,66 @@ export default function AdminPage() {
         100,
     );
   }, [dashboard]);
+
+  async function handleIngestion() {
+  if (isIngesting) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Re-index the entire corpus? This will regenerate embeddings for all documents.",
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  setIsIngesting(true);
+  setIngestionMessage("");
+  setError("");
+
+  try {
+    const result = await runIngestion();
+
+    setIngestionMessage(
+      `Ingestion completed: ${result.documentsProcessed} processed, ${result.documentsFailed} failed.`,
+    );
+
+    const refreshedDashboard = await getDashboard();
+    setDashboard(refreshedDashboard);
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Corpus ingestion failed.",
+    );
+  } finally {
+    setIsIngesting(false);
+  }
+}
+
+function formatDocumentError(message: string): string {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("429") ||
+    normalized.includes("resource_exhausted") ||
+    normalized.includes("quota exceeded") ||
+    normalized.includes("rate limit")
+  ) {
+    return "Embedding rate limit exceeded during ingestion.";
+  }
+
+  if (
+    normalized.includes("401") ||
+    normalized.includes("unauthorized") ||
+    normalized.includes("api key")
+  ) {
+    return "Embedding provider authentication failed.";
+  }
+
+  return "Document ingestion failed. Check server logs for details.";
+}
 
   function handleLogout() {
     clearAuthSession();
@@ -133,6 +195,44 @@ export default function AdminPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <div className="mb-8">
+            <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <span className="inline-flex rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand">
+                    Admin
+                    </span>
+
+                    <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-text-primary sm:text-4xl">
+                    System overview
+                    </h1>
+
+                    <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary sm:text-base">
+                    Monitor corpus health, ingestion activity, and retrieval usage.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={handleIngestion}
+                    disabled={isIngesting}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    {isIngesting ? (
+                    <>
+                        <Spinner />
+                        Re-indexing...
+                    </>
+                    ) : (
+                    <>
+                        Re-index corpus
+                    </>
+                    )}
+                </button>
+                </div>
+                {ingestionMessage && (
+                <div className="mb-6 rounded-xl border border-green-200 bg-success-soft px-4 py-3 text-sm text-success">
+                    {ingestionMessage}
+                </div>
+                )}
           <span className="inline-flex rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand">
             Admin
           </span>
@@ -348,9 +448,9 @@ export default function AdminPage() {
 
                           {document.errorMessage && (
                             <p className="mt-1 text-xs text-danger">
-                              {document.errorMessage}
+                                {formatDocumentError(document.errorMessage)}
                             </p>
-                          )}
+                            )}
                         </td>
 
                         <td className="px-5 py-3.5">

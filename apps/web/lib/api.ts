@@ -99,3 +99,20 @@ export function getDashboard(): Promise<DashboardResponse> {
     true,
   );
 }
+
+export interface IngestionResponse {
+  message: string;
+  runId: number;
+  documentsProcessed: number;
+  documentsFailed: number;
+}
+
+export function runIngestion(): Promise<IngestionResponse> {
+  return request<IngestionResponse>(
+    "/api/admin/ingestion",
+    {
+      method: "POST",
+    },
+    true,
+  );
+}

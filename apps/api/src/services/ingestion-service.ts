@@ -18,6 +18,14 @@ export interface IngestionResult {
   documentsFailed: number;
 }
 
+const INGESTION_EMBEDDING_DELAY_MS = 700;
+
+function sleep(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
 interface ChunkWithEmbedding {
   documentId: number;
   chunkIndex: number;
@@ -113,6 +121,8 @@ export async function ingestCorpus(): Promise<IngestionResult> {
             content: chunk.content,
             embedding,
           });
+
+          await sleep(INGESTION_EMBEDDING_DELAY_MS);
         }
 
         await db.transaction(async (tx) => {
