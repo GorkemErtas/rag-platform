@@ -261,9 +261,12 @@ export default function ChatPage() {
 
             <div className="mt-3 space-y-2">
               {[
-                "What changed in Lumen Build 4.2?",
-                "How do I initialize the current Lumen SDK?",
-                "Which languages must every playable ship with?",
+                "What is the maximum file size for an AppLovin playable, and how does it ship?",
+                "How do I initialize the current Lumen SDK, and what happened to lumen.track?",
+                "Why are sound assets built in a separate pass?",
+                "What caused the March 2026 AppLovin rejections and what was fixed?",
+                "Which languages must every playable ship with, and what is the fallback?",
+                "How many paid vacation days do employees receive each year?",
               ].map((example) => (
                 <button
                   key={example}

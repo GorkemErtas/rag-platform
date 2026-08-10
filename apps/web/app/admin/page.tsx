@@ -196,37 +196,20 @@ function formatDocumentError(message: string): string {
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <div className="mb-8">
             <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                <div>
+                <div className="mb-8">
                     <span className="inline-flex rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand">
-                    Admin
+                        Admin
                     </span>
 
                     <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-text-primary sm:text-4xl">
-                    System overview
+                        System overview
                     </h1>
 
                     <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary sm:text-base">
-                    Monitor corpus health, ingestion activity, and retrieval usage.
+                        Monitor corpus health, ingestion activity, and retrieval usage.
                     </p>
-                </div>
+                    </div>
 
-                <button
-                    type="button"
-                    onClick={handleIngestion}
-                    disabled={isIngesting}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {isIngesting ? (
-                    <>
-                        <Spinner />
-                        Re-indexing...
-                    </>
-                    ) : (
-                    <>
-                        Re-index corpus
-                    </>
-                    )}
-                </button>
                 </div>
                 {ingestionMessage && (
                 <div className="mb-6 rounded-xl border border-green-200 bg-success-soft px-4 py-3 text-sm text-success">
@@ -400,23 +383,41 @@ function formatDocumentError(message: string): string {
             </div>
 
             <section className="mt-6 rounded-2xl border border-border bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6">
+              <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
                 <div>
-                  <h2 className="text-sm font-semibold text-text-primary">
+                    <h2 className="text-sm font-semibold text-text-primary">
                     Corpus documents
-                  </h2>
+                    </h2>
 
-                  <p className="mt-1 text-xs text-text-secondary">
+                    <p className="mt-1 text-xs text-text-secondary">
                     Indexing status for every source file.
-                  </p>
+                    </p>
                 </div>
 
-                {dashboard.stats.failedDocuments > 0 && (
-                  <span className="rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger">
-                    {dashboard.stats.failedDocuments} failed
-                  </span>
-                )}
-              </div>
+                <div className="flex shrink-0 items-center gap-3">
+                    {dashboard.stats.failedDocuments > 0 && (
+                    <span className="rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger">
+                        {dashboard.stats.failedDocuments} failed
+                    </span>
+                    )}
+
+                    <button
+                    type="button"
+                    onClick={handleIngestion}
+                    disabled={isIngesting}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-brand px-3.5 text-xs font-semibold text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                    {isIngesting ? (
+                        <>
+                        <Spinner />
+                        Re-indexing...
+                        </>
+                    ) : (
+                        "Re-index corpus"
+                    )}
+                    </button>
+                </div>
+                </div>
 
               <div className="max-h-[520px] overflow-auto">
                 <table className="w-full min-w-[760px] border-collapse text-left">
