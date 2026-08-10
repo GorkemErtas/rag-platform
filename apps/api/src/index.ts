@@ -1,6 +1,7 @@
 import express from "express";
 import type { HealthResponse } from "@playable-factory/shared";
 
+import { authRouter } from "./routes/auth-route.js";
 import { chatRouter } from "./routes/chat-route.js";
 
 const app = express();
@@ -17,6 +18,7 @@ app.get("/health", (_req, res) => {
   res.json(response);
 });
 
+app.use("/api/auth", authRouter);
 app.use("/api/chat", chatRouter);
 
 app.listen(port, () => {

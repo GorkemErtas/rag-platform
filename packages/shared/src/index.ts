@@ -34,3 +34,26 @@ export interface ChatResponse {
   answered: boolean;
   sources: ChatSource[];
 }
+
+export type UserRole = "USER" | "ADMIN";
+
+export interface AuthUser {
+  id: number;
+  email: string;
+  role: UserRole;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}

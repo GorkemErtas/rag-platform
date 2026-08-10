@@ -7,10 +7,11 @@ import { Router } from "express";
 import { db } from "../db/index.js";
 import { searchLogs } from "../db/schema.js";
 import { answerQuestion } from "../services/rag-service.js";
+import { requireAuth } from "../middleware/auth-middleware.js";
 
 export const chatRouter = Router();
 
-chatRouter.post("/", async (req, res) => {
+chatRouter.post("/", requireAuth, async (req, res) => {
   try {
     const body = req.body as Partial<ChatRequest>;
     const question = body.question?.trim();
@@ -25,7 +26,7 @@ chatRouter.post("/", async (req, res) => {
     const result = await answerQuestion(question);
 
     await db.insert(searchLogs).values({
-      userId: null,
+      userId: req.user!.id,
       query: question,
       resultCount: result.sources.length,
       answered: result.answered,

@@ -27,4 +27,7 @@ export const env = {
     rootDir,
     process.env.CORPUS_PATH ?? "corpus",
   ),
+
+  jwtSecret: process.env.JWT_SECRET,
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "1h",
 };
