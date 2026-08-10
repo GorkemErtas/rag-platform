@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev:web": "pnpm --filter web dev",
+    "dev:web": "pnpm --filter @playable-factory/web dev",
     "dev:api": "pnpm --filter @playable-factory/api dev",
-    "build": "pnpm -r build"
+    "dev:mcp": "pnpm --filter @playable-factory/mcp dev",
+    "build": "pnpm -r build",
+    "db:migrate": "pnpm --filter @playable-factory/api db:migrate",
+    "db:seed": "pnpm --filter @playable-factory/api db:seed",
+    "ingest": "pnpm --filter @playable-factory/api ingest",
+    "setup": "pnpm db:migrate && pnpm db:seed && pnpm ingest"
   },
   "packageManager": "pnpm@10.34.5"
 }
