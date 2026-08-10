@@ -12,7 +12,9 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "test:embedding": "tsx src/scripts/test-embedding.ts",
     "test:corpus": "tsx src/scripts/test-corpus.ts",
-    "ingest": "tsx src/scripts/ingest.ts"
+    "ingest": "tsx src/scripts/ingest.ts",
+    "test:retrieval": "tsx src/scripts/test-retrieval.ts",
+    "test:rag": "tsx src/scripts/test-rag.ts"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",
