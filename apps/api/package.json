@@ -9,7 +9,9 @@
     "start": "node dist/index.js",
     "lint": "eslint src",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/db/migrate.ts"
+    "db:migrate": "tsx src/db/migrate.ts",
+    "test:embedding": "tsx src/scripts/test-embedding.ts",
+    "test:corpus": "tsx src/scripts/test-corpus.ts"
   },
   "dependencies": {
     "@playable-factory/shared": "workspace:*",
@@ -17,6 +19,7 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
+    "ollama": "^0.6.3",
     "pg": "^8.23.0"
   },
   "devDependencies": {
