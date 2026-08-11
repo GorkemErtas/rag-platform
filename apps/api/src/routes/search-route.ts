@@ -3,6 +3,7 @@ import { Router } from "express";
 
 import { requireSearchAccess } from "../middleware/search-auth-middleware.js";
 import { searchDocuments } from "../services/retrieval-service.js";
+import { RETRIEVAL_CONFIG } from "../config/constants.js";
 
 export const searchRouter = Router();
 
@@ -25,7 +26,13 @@ searchRouter.post("/", requireSearchAccess, async (req, res) => {
       return;
     }
 
-    const results = await searchDocuments(query, limit);
+    const results = (
+      await searchDocuments(query, limit)
+    ).filter(
+      (result) =>
+        result.similarity >=
+        RETRIEVAL_CONFIG.minSimilarity,
+    );
 
     const response: SearchResponse = {
       query,
