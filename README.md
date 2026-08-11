@@ -91,6 +91,18 @@ values.
 cp .env.example .env
 ```
 
+Set the required secrets:
+
+- `GEMINI_API_KEY`: Google Gemini API key.
+- `JWT_SECRET`: Any sufficiently long random string used to sign local JWTs.
+- `MCP_SERVICE_TOKEN`: Any sufficiently long random string for local API/MCP authentication. When connecting the local MCP server to the deployed API, use the service token provided via email (MCP_SERVER_ACCESS.txt).
+
+For local development, `JWT_SECRET` and `MCP_SERVICE_TOKEN` can be generated with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
 ### 3. Start PostgreSQL
 
 ``` bash
