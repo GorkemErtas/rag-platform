@@ -140,6 +140,16 @@ To run the MCP server separately:
 pnpm dev:mcp
 ```
 
+To test the MCP server with MCP Inspector, open a new terminal and run:
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+and then follow the path:
+
+connect -> list tools -> search_documents
+
 ## Demo Credentials
 
 **Regular User**
