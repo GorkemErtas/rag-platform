@@ -244,27 +244,38 @@ export async function searchDocumentsHybrid(
     });
   });
 
-    const maxRrfScore =
-    (RETRIEVAL_CONFIG.vectorWeight +
-      RETRIEVAL_CONFIG.lexicalWeight) /
-    (RETRIEVAL_CONFIG.rrfK + 1);
+    const rankedResults = [...fusedResults.values()]
+  .sort((left, right) => {
+    if (right.score !== left.score) {
+      return right.score - left.score;
+    }
 
-  return [...fusedResults.values()]
-    .sort((left, right) => {
-      if (right.score !== left.score) {
-        return right.score - left.score;
-      }
+    return (
+      right.result.similarity -
+      left.result.similarity
+    );
+  })
+  .slice(0, limit);
 
-      return (
-        right.result.similarity -
-        left.result.similarity
-      );
-    })
-    .slice(0, limit)
-    .map(({ result, score }) => ({
-      ...result,
-      relevance: Math.min(score / maxRrfScore, 1),
-    }));
+const topHybridScore = rankedResults[0]?.score ?? 0;
+
+return rankedResults.map(({ result, score }) => {
+  const normalizedHybridScore =
+    topHybridScore > 0
+      ? score / topHybridScore
+      : 0;
+
+  const relevance =
+    RETRIEVAL_CONFIG.denseRelevanceWeight *
+      result.similarity +
+    RETRIEVAL_CONFIG.hybridRelevanceWeight *
+      normalizedHybridScore;
+
+  return {
+    ...result,
+    relevance: Math.min(Math.max(relevance, 0), 1),
+  };
+});
 }
 
 export async function searchDocuments(

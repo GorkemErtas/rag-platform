@@ -13,9 +13,14 @@ export const RETRIEVAL_CONFIG = {
   defaultTopK: 5,
   minSimilarity: 0.65,
   maxSearchLimit: 20,
+
   rrfK: 60,
   vectorWeight: 1,
   lexicalWeight: 1.2,
+
+  denseRelevanceWeight: 0.7,
+  hybridRelevanceWeight: 0.3,
+
   candidateMultiplier: 4,
   minCandidateCount: 20,
   maxCandidateCount: 50,
