@@ -76,10 +76,15 @@ async function runDenseSearch(
     .orderBy(desc(similarity))
     .limit(limit);
 
-  return results.map((result) => ({
-    ...result,
-    similarity: Number(result.similarity),
-  }));
+  return results.map((result) => {
+    const similarity = Number(result.similarity);
+
+    return {
+      ...result,
+      similarity,
+      relevance: similarity,
+    };
+  });
 }
 
 async function runLexicalSearch(
@@ -139,11 +144,16 @@ async function runLexicalSearch(
     .orderBy(desc(lexicalRank))
     .limit(limit);
 
-  return results.map((result) => ({
-    ...result,
-    similarity: Number(result.similarity),
-    lexicalRank: Number(result.lexicalRank),
-  }));
+  return results.map((result) => {
+    const similarity = Number(result.similarity);
+
+    return {
+      ...result,
+      similarity,
+      relevance: similarity,
+      lexicalRank: Number(result.lexicalRank),
+    };
+  });
 }
 
 export async function searchDocumentsDense(
@@ -234,6 +244,11 @@ export async function searchDocumentsHybrid(
     });
   });
 
+    const maxRrfScore =
+    (RETRIEVAL_CONFIG.vectorWeight +
+      RETRIEVAL_CONFIG.lexicalWeight) /
+    (RETRIEVAL_CONFIG.rrfK + 1);
+
   return [...fusedResults.values()]
     .sort((left, right) => {
       if (right.score !== left.score) {
@@ -246,7 +261,10 @@ export async function searchDocumentsHybrid(
       );
     })
     .slice(0, limit)
-    .map(({ result }) => result);
+    .map(({ result, score }) => ({
+      ...result,
+      relevance: Math.min(score / maxRrfScore, 1),
+    }));
 }
 
 export async function searchDocuments(

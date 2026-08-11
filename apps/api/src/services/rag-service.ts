@@ -28,6 +28,7 @@ export interface RagSource {
   title: string | null;
   chunkIndex: number;
   similarity: number;
+  relevance: number;
 }
 
 export interface RagResponse {
@@ -111,6 +112,7 @@ ${context}
       title: result.documentTitle,
       chunkIndex: result.chunkIndex,
       similarity: result.similarity,
+      relevance: result.relevance,
     })),
   };
 }

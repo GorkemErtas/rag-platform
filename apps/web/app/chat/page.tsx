@@ -249,7 +249,7 @@ export default function ChatPage() {
               <Step
                 number="3"
                 title="Source attribution"
-                description="Relevant source documents and similarity scores are returned with the answer."
+                description="Relevant source documents and hybrid relevance scores are returned with the answer."
               />
             </div>
           </div>
@@ -350,7 +350,11 @@ function AnswerPanel({
                 </div>
 
                 <span className="shrink-0 rounded-lg bg-white px-2 py-1 font-mono text-[11px] text-text-secondary shadow-sm">
-                  {source.similarity.toFixed(3)}
+                  <span
+                    title={`Dense similarity: ${source.similarity.toFixed(3)}`}
+                    className="shrink-0 rounded-lg bg-white px-2 py-1 font-mono text-[11px] text-text-secondary shadow-sm"
+                  ></span>
+                  {source.relevance.toFixed(3)}
                 </span>
               </div>
             ))}

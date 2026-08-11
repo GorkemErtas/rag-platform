@@ -11,6 +11,7 @@ export interface SearchResult {
   chunkIndex: number;
   content: string;
   similarity: number;
+  relevance: number;
 }
 
 export interface SearchResponse {
@@ -27,6 +28,7 @@ export interface ChatSource {
   title: string | null;
   chunkIndex: number;
   similarity: number;
+  relevance: number;
 }
 
 export interface ChatResponse {
