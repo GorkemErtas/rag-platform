@@ -10,6 +10,8 @@ import {
   vector,
 } from "drizzle-orm/pg-core";
 
+import { EMBEDDING_CONFIG } from "../config/constants.js";
+
 export const userRoleEnum = pgEnum("user_role", ["USER", "ADMIN"]);
 
 export const ingestionStatusEnum = pgEnum("ingestion_status", [
@@ -62,7 +64,7 @@ export const documentChunks = pgTable(
     content: text("content").notNull(),
     tokenCount: integer("token_count"),
     embedding: vector("embedding", {
-      dimensions: 768,
+      dimensions: EMBEDDING_CONFIG.dimensions,
     }),
   },
   (table) => [

@@ -5,13 +5,12 @@ import type {
 } from "@playable-factory/shared";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 
 import { env } from "../config/env.js";
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
-
-const PASSWORD_SALT_ROUNDS = 12;
+import { AUTH_CONFIG } from "../config/constants.js";
 
 function getJwtSecret(): string {
   if (!env.jwtSecret) {
@@ -30,7 +29,8 @@ function createToken(user: AuthUser): string {
     },
     getJwtSecret(),
     {
-      expiresIn: "1h",
+      expiresIn:
+        env.jwtExpiresIn as SignOptions["expiresIn"],
     },
   );
 }
@@ -54,7 +54,7 @@ export async function registerUser(
 
   const passwordHash = await bcrypt.hash(
     password,
-    PASSWORD_SALT_ROUNDS,
+    AUTH_CONFIG.passwordSaltRounds,
   );
 
   const [createdUser] = await db

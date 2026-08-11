@@ -2,9 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 
 import { env } from "../config/env.js";
 import { searchDocuments } from "./retrieval-service.js";
-
-export const CURRENT_THRESHOLD = 0.65;
-const TOP_K = 5;
+import { RETRIEVAL_CONFIG } from "../config/constants.js";
 
 if (!env.geminiApiKey) {
   throw new Error("GEMINI_API_KEY is not defined");
@@ -13,6 +11,17 @@ if (!env.geminiApiKey) {
 const ai = new GoogleGenAI({
   apiKey: env.geminiApiKey,
 });
+
+const NO_ANSWER_MESSAGE =
+  "I couldn't find enough information in the provided corpus to answer that question.";
+
+function createNoAnswerResponse(): RagResponse {
+  return {
+    answer: NO_ANSWER_MESSAGE,
+    answered: false,
+    sources: [],
+  };
+}
 
 export interface RagSource {
   path: string;
@@ -38,20 +47,15 @@ export async function answerQuestion(
 
   const results = await searchDocuments(
     normalizedQuestion,
-    TOP_K,
+    RETRIEVAL_CONFIG.defaultTopK,
   );
 
   const relevantResults = results.filter(
-    (result) => result.similarity >= CURRENT_THRESHOLD,
+    (result) => result.similarity >= RETRIEVAL_CONFIG.minSimilarity,
   );
 
   if (relevantResults.length === 0) {
-    return {
-      answer:
-        "I couldn't find enough information in the provided corpus to answer that question.",
-      answered: false,
-      sources: [],
-    };
+    return createNoAnswerResponse();
   }
 
   const context = relevantResults
@@ -96,13 +100,8 @@ ${context}
   const text = response.text?.trim();
 
   if (!text || text.includes("INSUFFICIENT_CONTEXT")) {
-    return {
-      answer:
-        "I couldn't find enough information in the provided corpus to answer that question.",
-      answered: false,
-      sources: [],
-    };
-  }
+  return createNoAnswerResponse();
+}
 
   return {
     answer: text,

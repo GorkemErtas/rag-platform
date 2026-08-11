@@ -236,8 +236,8 @@ export default function ChatPage() {
             <div className="mt-4 space-y-4">
               <Step
                 number="1"
-                title="Semantic retrieval"
-                description="Your question is embedded and matched against indexed document vectors."
+                title="Hybrid retrieval"
+                description="Semantic similarity and lexical matching are combined to retrieve the most relevant corpus passages."
               />
 
               <Step

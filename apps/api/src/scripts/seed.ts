@@ -3,19 +3,25 @@ import { eq } from "drizzle-orm";
 
 import { pool, db } from "../db/index.js";
 import { users } from "../db/schema.js";
+import { AUTH_CONFIG } from "../config/constants.js";
+import type { UserRole } from "@playable-factory/shared";
 
-const PASSWORD_SALT_ROUNDS = 12;
+interface DemoUser {
+  email: string;
+  password: string;
+  role: UserRole;
+}
 
-const demoUsers = [
+const demoUsers: DemoUser[] = [
   {
     email: "user@demo.local",
     password: "User1234!",
-    role: "USER" as const,
+    role: "USER",
   },
   {
     email: "admin@demo.local",
     password: "Admin1234!",
-    role: "ADMIN" as const,
+    role: "ADMIN",
   },
 ];
 
@@ -23,7 +29,7 @@ try {
   for (const demoUser of demoUsers) {
     const passwordHash = await bcrypt.hash(
       demoUser.password,
-      PASSWORD_SALT_ROUNDS,
+      AUTH_CONFIG.passwordSaltRounds,
     );
 
     const existing = await db

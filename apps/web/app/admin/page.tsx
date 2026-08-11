@@ -195,40 +195,24 @@ function formatDocumentError(message: string): string {
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <div className="mb-8">
-            <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                <div className="mb-8">
-                    <span className="inline-flex rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand">
-                        Admin
-                    </span>
+            <span className="inline-flex rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand">
+              Admin
+            </span>
 
-                    <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-text-primary sm:text-4xl">
-                        System overview
-                    </h1>
+            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-text-primary sm:text-4xl">
+              System overview
+            </h1>
 
-                    <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary sm:text-base">
-                        Monitor corpus health, ingestion activity, and retrieval usage.
-                    </p>
-                    </div>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary sm:text-base">
+              Monitor corpus health, ingestion activity, and retrieval usage.
+            </p>
+          </div>
 
-                </div>
-                {ingestionMessage && (
-                <div className="mb-6 rounded-xl border border-green-200 bg-success-soft px-4 py-3 text-sm text-success">
-                    {ingestionMessage}
-                </div>
-                )}
-          <span className="inline-flex rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand">
-            Admin
-          </span>
-
-          <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-text-primary sm:text-4xl">
-            System overview
-          </h1>
-
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary sm:text-base">
-            Monitor corpus health, ingestion activity, and retrieval usage.
-          </p>
-        </div>
-
+          {ingestionMessage && (
+            <div className="mb-6 rounded-xl border border-green-200 bg-success-soft px-4 py-3 text-sm text-success">
+              {ingestionMessage}
+            </div>
+          )}
         {isLoading && (
           <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-border bg-white shadow-sm">
             <div className="text-center">

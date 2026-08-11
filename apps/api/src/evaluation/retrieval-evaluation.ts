@@ -1,7 +1,7 @@
 import type { SearchResult } from "@playable-factory/shared";
 
 import { pool } from "../db/index.js";
-import { CURRENT_THRESHOLD } from "../services/rag-service.js";
+import { RETRIEVAL_CONFIG } from "../config/constants.js";
 import {
   searchDocumentsDense,
   searchDocumentsHybrid,
@@ -105,7 +105,7 @@ async function evaluate(
 
       console.log(
         `  Threshold: ${
-          topScore >= CURRENT_THRESHOLD
+          topScore >= RETRIEVAL_CONFIG.minSimilarity
             ? "PASS"
             : "REJECT"
         }`,
@@ -115,7 +115,7 @@ async function evaluate(
       negativeTopScores.push(topScore);
 
       const abstained =
-        topScore < CURRENT_THRESHOLD;
+        topScore < RETRIEVAL_CONFIG.minSimilarity;
 
       if (abstained) {
         correctAbstentions += 1;
@@ -185,7 +185,7 @@ async function evaluate(
   );
 
   console.log(
-    `Current threshold: ${CURRENT_THRESHOLD.toFixed(4)}`,
+    `Current threshold: ${RETRIEVAL_CONFIG.minSimilarity.toFixed(4)}`,
   );
 
   return {

@@ -11,6 +11,7 @@ import {
 import { chunkDocument } from "./chunking-service.js";
 import { loadCorpus } from "./corpus-service.js";
 import { generateEmbedding } from "./embedding-service.js";
+import { sleep } from "../utils/async.js";
 
 export interface IngestionResult {
   runId: number;
@@ -19,12 +20,6 @@ export interface IngestionResult {
 }
 
 const INGESTION_EMBEDDING_DELAY_MS = 700;
-
-function sleep(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, milliseconds);
-  });
-}
 
 interface ChunkWithEmbedding {
   documentId: number;

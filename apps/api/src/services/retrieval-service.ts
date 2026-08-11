@@ -13,12 +13,7 @@ import {
   documents,
 } from "../db/schema.js";
 import { generateEmbedding } from "./embedding-service.js";
-
-const DEFAULT_TOP_K = 5;
-
-const RRF_K = 60;
-const VECTOR_WEIGHT = 1;
-const LEXICAL_WEIGHT = 1.2;
+import { RETRIEVAL_CONFIG } from "../config/constants.js";
 
 interface RankedSearchResult extends SearchResult {
   lexicalRank?: number;
@@ -34,7 +29,7 @@ function validateSearch(
     throw new Error("Search query cannot be empty");
   }
 
-  if (limit < 1 || limit > 20) {
+  if (limit < 1 || limit > RETRIEVAL_CONFIG.maxSearchLimit) {
     throw new Error(
       "Search limit must be between 1 and 20",
     );
@@ -153,7 +148,7 @@ async function runLexicalSearch(
 
 export async function searchDocumentsDense(
   query: string,
-  limit = DEFAULT_TOP_K,
+  limit: number = RETRIEVAL_CONFIG.defaultTopK,
 ): Promise<SearchResult[]> {
   const normalizedQuery = validateSearch(
     query,
@@ -168,7 +163,7 @@ export async function searchDocumentsDense(
 
 export async function searchDocumentsHybrid(
   query: string,
-  limit = DEFAULT_TOP_K,
+  limit: number = RETRIEVAL_CONFIG.defaultTopK,
 ): Promise<SearchResult[]> {
   const normalizedQuery = validateSearch(
     query,
@@ -179,8 +174,11 @@ export async function searchDocumentsHybrid(
     await generateQueryEmbedding(normalizedQuery);
 
   const candidateLimit = Math.min(
-    50,
-    Math.max(limit * 4, 20),
+    RETRIEVAL_CONFIG.maxCandidateCount,
+    Math.max(
+      limit * RETRIEVAL_CONFIG.candidateMultiplier,
+      RETRIEVAL_CONFIG.minCandidateCount,
+    ),
   );
 
   const [vectorResults, lexicalResults] =
@@ -210,8 +208,8 @@ export async function searchDocumentsHybrid(
     fusedResults.set(result.chunkId, {
       result,
       score:
-        VECTOR_WEIGHT /
-        (RRF_K + rank),
+        RETRIEVAL_CONFIG.vectorWeight /
+        (RETRIEVAL_CONFIG.rrfK + rank),
     });
   });
 
@@ -219,8 +217,8 @@ export async function searchDocumentsHybrid(
     const rank = index + 1;
 
     const lexicalScore =
-      LEXICAL_WEIGHT /
-      (RRF_K + rank);
+      RETRIEVAL_CONFIG.lexicalWeight /
+      (RETRIEVAL_CONFIG.rrfK + rank);
 
     const existing =
       fusedResults.get(result.chunkId);
@@ -253,7 +251,7 @@ export async function searchDocumentsHybrid(
 
 export async function searchDocuments(
   query: string,
-  limit = DEFAULT_TOP_K,
+  limit: number = RETRIEVAL_CONFIG.defaultTopK,
 ): Promise<SearchResult[]> {
   return searchDocumentsHybrid(query, limit);
 }

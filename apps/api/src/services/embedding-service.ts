@@ -1,5 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { env } from "../config/env.js";
+import { EMBEDDING_CONFIG } from "../config/constants.js";
+import { sleep } from "../utils/async.js";
 
 if (!env.geminiApiKey) {
   throw new Error("GEMINI_API_KEY is not defined");
@@ -8,11 +10,6 @@ if (!env.geminiApiKey) {
 const ai = new GoogleGenAI({
   apiKey: env.geminiApiKey,
 });
-
-const EMBEDDING_DIMENSIONS = 768;
-
-const MAX_RETRIES = 4;
-const INITIAL_RETRY_DELAY_MS = 5_000;
 
 type EmbeddingType = "document" | "query";
 
@@ -31,12 +28,6 @@ function normalizeEmbedding(values: number[]): number[] {
   }
 
   return values.map((value) => value / magnitude);
-}
-
-function sleep(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, milliseconds);
-  });
 }
 
 function isRateLimitError(error: unknown): boolean {
@@ -78,20 +69,23 @@ function getRetryDelay(
     }
   }
 
-  return INITIAL_RETRY_DELAY_MS * 2 ** attempt;
+  return (
+  EMBEDDING_CONFIG.initialRetryDelayMs *
+  2 ** attempt
+);
 }
 
 async function requestEmbedding(
   text: string,
   options: GenerateEmbeddingOptions,
 ) {
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+  for (let attempt = 0; attempt <= EMBEDDING_CONFIG.maxRetries; attempt += 1) {
     try {
       return await ai.models.embedContent({
         model: env.geminiEmbeddingModel,
         contents: text,
         config: {
-          outputDimensionality: EMBEDDING_DIMENSIONS,
+          outputDimensionality: EMBEDDING_CONFIG.dimensions,
           taskType:
             options.type === "document"
               ? "RETRIEVAL_DOCUMENT"
@@ -104,7 +98,7 @@ async function requestEmbedding(
     } catch (error) {
       if (
         !isRateLimitError(error) ||
-        attempt === MAX_RETRIES
+        attempt === EMBEDDING_CONFIG.maxRetries
       ) {
         throw error;
       }
@@ -114,7 +108,7 @@ async function requestEmbedding(
       console.warn(
         `[embedding] Rate limited. Retrying in ${Math.ceil(
           delay / 1_000,
-        )}s (${attempt + 1}/${MAX_RETRIES})`,
+        )}s (${attempt + 1}/${EMBEDDING_CONFIG.maxRetries})`,
       );
 
       await sleep(delay);
@@ -147,7 +141,7 @@ export async function generateEmbedding(
     throw new Error("Gemini returned no embedding");
   }
 
-  if (embedding.length !== EMBEDDING_DIMENSIONS) {
+  if (embedding.length !== EMBEDDING_CONFIG.dimensions) {
     throw new Error(
       `Unexpected embedding dimension: ${embedding.length}`,
     );

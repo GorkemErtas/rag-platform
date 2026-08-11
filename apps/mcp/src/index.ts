@@ -63,7 +63,7 @@ const server = new McpServer({
 
 server.tool(
   "search_documents",
-  "Semantically search the indexed Playable Factory document corpus.",
+  "Search the indexed Playable Factory document corpus using hybrid retrieval.",
   {
     query: z.string().min(1),
     limit: z.number().int().min(1).max(20).default(5),
