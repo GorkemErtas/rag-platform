@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { env } from "../config/env.js";
 import { searchDocuments } from "./retrieval-service.js";
 
-const MIN_SIMILARITY = 0.55;
+export const CURRENT_THRESHOLD = 0.65;
 const TOP_K = 5;
 
 if (!env.geminiApiKey) {
@@ -42,7 +42,7 @@ export async function answerQuestion(
   );
 
   const relevantResults = results.filter(
-    (result) => result.similarity >= MIN_SIMILARITY,
+    (result) => result.similarity >= CURRENT_THRESHOLD,
   );
 
   if (relevantResults.length === 0) {
