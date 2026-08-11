@@ -120,15 +120,25 @@ failures can be observed from the admin dashboard.
 
 ## Running the Application
 
-Start the development services from the repository root:
+Start the API from the repository root:
 
-``` bash
-pnpm dev
+```bash
+pnpm dev:api
 ```
 
-The frontend and API can also be started through their individual
-workspace scripts when developing a single service. Use the local URLs
-printed by the development servers.
+In a second terminal, start the frontend:
+
+```bash
+pnpm dev:web
+```
+
+The API and frontend development URLs are printed in their respective terminals.
+
+To run the MCP server separately:
+
+```bash
+pnpm dev:mcp
+```
 
 ## Demo Credentials
 
