@@ -22,9 +22,7 @@
     "test:rag:evaluation": "tsx src/evaluation/rag-evaluation.ts",
     "test:evaluation:v3": "tsx src/evaluation/retrieval-evaluation-v3.ts",
     "test:rag:evaluation:v3": "tsx src/evaluation/rag-evaluation-v3.ts",
-    "test:rag:evaluation:v4": "tsx src/evaluation/rag-evaluation-v4.ts",
-    "test:query-rewrite": "tsx src/scripts/test-query-rewrite.ts",
-    "test:retrieval:multi": "tsx src/scripts/test-retrieval-multi-query.ts"
+    "test:rag:evaluation:v4": "tsx src/evaluation/rag-evaluation-v4.ts"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",

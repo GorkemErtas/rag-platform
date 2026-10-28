@@ -14,7 +14,7 @@ export const chatRouter = Router();
 chatRouter.post("/", requireAuth, async (req, res) => {
   try {
     const body = req.body as Partial<ChatRequest>;
-    const question = body.question?.trim();
+    const question = typeof body.question === "string" ? body.question.trim() : "";
 
     if (!question) {
       res.status(400).json({
@@ -36,6 +36,7 @@ chatRouter.post("/", requireAuth, async (req, res) => {
       answer: result.answer,
       answered: result.answered,
       sources: result.sources,
+      ...(result.missingInformation ? { missingInformation: result.missingInformation } : {}),
     };
 
     res.json(response);

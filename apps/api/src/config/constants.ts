@@ -10,21 +10,18 @@ export const EMBEDDING_CONFIG = {
 } as const;
 
 export const RETRIEVAL_CONFIG = {
-  // Historical threshold retained only until evaluation runners are replaced.
+  // Used by historical evaluation runners only, never runtime answerability.
   defaultTopK: 5,
   minSimilarity: 0.65,
   maxSearchLimit: 20,
 
   rrfK: 60,
-  vectorWeight: 1,
-  lexicalWeight: 1.2,
-
-  denseRelevanceWeight: 0.7,
-  hybridRelevanceWeight: 0.3,
-
-  candidateMultiplier: 4,
-  minCandidateCount: 20,
   maxCandidateCount: 50,
+} as const;
+
+export const RAG_CONFIG = {
+  maxContextChunks: 8,
+  maxContextCharacters: 12000,
 } as const;
 
 export const CHUNKING_CONFIG = {

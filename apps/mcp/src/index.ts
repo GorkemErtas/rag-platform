@@ -63,7 +63,7 @@ const server = new McpServer({
 
 server.tool(
   "search_documents",
-  "Search the indexed Playable Factory document corpus using hybrid retrieval.",
+  "Search indexed corpus passages by semantic relevance. Results are search candidates, not verified answers; similarity and relevance are ranking signals, not confidence.",
   {
     query: z.string().min(1),
     limit: z.number().int().min(1).max(20).default(5),

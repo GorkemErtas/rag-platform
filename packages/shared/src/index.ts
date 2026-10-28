@@ -11,6 +11,7 @@ export interface SearchResult {
   chunkIndex: number;
   content: string;
   similarity: number;
+  /** Ranking score only: cosine for dense, raw RRF for hybrid. Not confidence. */
   relevance: number;
 }
 
@@ -24,6 +25,9 @@ export interface ChatRequest {
 }
 
 export interface ChatSource {
+  /** Stable within the retrieved index snapshot, independent of ranking order. */
+  sourceId?: string;
+  quotes?: string[];
   path: string;
   title: string | null;
   chunkIndex: number;
@@ -35,6 +39,7 @@ export interface ChatResponse {
   answer: string;
   answered: boolean;
   sources: ChatSource[];
+  missingInformation?: string;
 }
 
 export type UserRole = "USER" | "ADMIN";
