@@ -3,16 +3,20 @@
 Evaluation is optional and separate from local setup. `pnpm run setup` and
 `pnpm dev` do not run these commands or call Gemini. The API failure recorded
 below came from the old local key during the earlier audit; it is historical,
-not a check of your current credentials.
+not a check of your current credentials. A later completed user-generated run
+is documented in [the follow-up analysis](2026-10-28-user-run-analysis.md).
 
 The dataset in `apps/api/src/evaluation/quality-cases.ts` contains 40 cases:
-7 tuning and 33 held-out cases, including technical identifiers, similar dated
+8 tuning and 32 held-out cases, including technical identifiers, similar dated
 reports, historical/current versions, supersession, two-document questions,
 multiple facts, a partial question, misleading premises, ambiguity and
 near-corpus negatives. Gold passages are literal substrings verified by the
 offline tests. All expected paths are exact, relative corpus paths.
 
-The split was declared before refactoring. Held-out means no ranking weights,
+The initial split was declared before refactoring. After the user reported the
+`company-pods` failure and it informed development, that case was moved to
+tuning. It must not be counted as an untouched held-out success in a new run.
+Held-out means no ranking weights,
 thresholds or rewriting were tuned to its measured results; it is not an
 independently blind external benchmark. Add new held-out cases for any future
 tuning campaign rather than repeatedly optimizing against the same questions.
@@ -54,11 +58,25 @@ pnpm --filter @playable-factory/api test:evaluation --output ../../docs/evaluati
 pnpm --filter @playable-factory/api test:rag:evaluation --output ../../docs/evaluation/rag.json
 ```
 
+Optional focused diagnosis (not executed as part of the latest changes):
+
+```bash
+pnpm --filter @playable-factory/api test:rag:evaluation --case company-pods --strategies hybrid
+```
+
+`--case` accepts comma-separated IDs across the dataset and labels the report
+split `selected`. `--strategies` accepts `dense`, `hybrid`, `rrf` or a
+comma-separated subset. It defaults to `dense,hybrid`; adding RRF is explicit
+so the comparison does not silently add a third generation call per question.
+Without `--output`, timestamped reports preserve previous runs instead of
+overwriting `quality-report.json`. No evaluation command runs automatically.
+
 Default split is held-out. `--split all` is available for a comprehensive run,
 but tuning and held-out cases should be reported separately when making a
-selection. Both strategies use the same query embedding, indexed corpus,
-candidate/context budget and generation parameters. Dense and hybrid are
-evaluated independently at K=1,3,5,8. No strategy is enabled based on fixture
+selection. Strategies use the same query embedding, indexed corpus,
+context budget and generation parameters. Retrieval is evaluated at K=1,3,5
+and the configured context limit (currently 8). Dense is the direct baseline;
+hybrid/RRF gather broader candidates. No strategy is enabled based on fixture
 contents. Index checksum/configuration and retained-file mismatches fail the
 run; index changes during the run invalidate the comparison.
 
@@ -82,6 +100,9 @@ report. It is not converted into a correct abstention or zero-accuracy result.
 | Quote provenance | Every returned quotation occurs in that retrieved source snapshot |
 | Source completeness | Every required source actually cited |
 | Partial limitation explicit | A partial response includes an explicit missingInformation field |
+| Complete answer rate proxy | Full question answered without missing information, all expected fact groups/sources present, valid citations and quote provenance, no flagged unsupported details |
+| Partial answers to full questions | A question requiring a full answer received an explicit partial response |
+| System failures | Invalid generation, unavailable context or unavailable index; never credited as a correct abstention |
 | Abstention precision | Correct abstentions / all abstentions |
 | Abstention recall | Correct abstentions / all questions requiring abstention |
 | False-positive abstention | An answerable question incorrectly rejected |
@@ -133,6 +154,9 @@ need review. Failed runs are never an accuracy baseline.
 ## Recorded results
 
 The [baseline](baseline.md) and before/after chunking reports contain actual
-local measurements. [live-retrieval.json](live-retrieval.json) records Gemini
-HTTP 401 before any held-out case completed. There are no live retrieval,
-generation accuracy, semantic faithfulness or cost improvements to report.
+local measurements. [live-retrieval.json](live-retrieval.json) records the earlier
+Gemini HTTP 401. The later [user-run summary](2026-10-28-user-run-summary.json)
+records completed retrieval and generation decisions. It does not establish
+factual correctness or semantic faithfulness. No new tests, build or model
+requests were run for the subsequent balanced-retrieval/paragraph-ID changes;
+there are no measured after-change improvements to report.

@@ -33,25 +33,25 @@ Return the specified JSON object, with an empty missingInformation for complete 
 
 function responseSchema(passageIds: string[]) {
   return {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    answered: { type: "boolean" },
-    claims: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          text: { type: "string" },
-          citationIds: { type: "array", minItems: 1, items: { type: "string", enum: passageIds } },
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      answered: { type: "boolean" },
+      claims: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            text: { type: "string" },
+            citationIds: { type: "array", minItems: 1, items: { type: "string", enum: passageIds } },
+          },
+          required: ["text", "citationIds"],
         },
-        required: ["text", "citationIds"],
       },
+      missingInformation: { type: "string" },
     },
-    missingInformation: { type: "string" },
-  },
-  required: ["answered", "claims", "missingInformation"],
+    required: ["answered", "claims", "missingInformation"],
   };
 }
 

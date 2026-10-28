@@ -16,6 +16,7 @@ dist/
 # Logs
 quality-report.json
 quality-report.json.tmp
+quality-report-*.json
 *.log
 npm-debug.log*
 pnpm-debug.log*

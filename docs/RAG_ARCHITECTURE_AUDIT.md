@@ -4,6 +4,10 @@ Audit date: 2026-10-28. Incoming workspace: `6cac430`; original main:
 `bf5191f`. Incoming experiments were committed before changes so they remain
 reviewable. No changes were merged into main or deployed to production.
 
+A subsequent user-generated run completed 33 RAG cases. Its analysis and the
+follow-up changes are recorded in [the user-run analysis](evaluation/2026-10-28-user-run-analysis.md).
+Historical measurements below remain tied to their original revisions.
+
 ## Findings and evidence
 
 | Finding | Evidence in incoming revision | Consequence | Resolution |
@@ -49,9 +53,9 @@ improvement is claimed.
 Corpus -> sorted Markdown loading -> paragraph chunks -> document embeddings
        -> atomic publication with checksum/configuration metadata
 
-Question -> one query embedding -> dense cosine ranking -> passage snapshots
-         -> one structured generation call -> source/quote validation
-         -> cited claims plus explicit missing information, or abstention
+Question -> one query embedding -> dense + lexical candidates -> balanced selection
+         -> paragraph snapshots with IDs -> one structured generation call
+         -> server-side citation resolution -> full/partial answer, abstention or error
 ```
 
 Search/API/MCP expose the same ranked candidates. They do not claim to have
@@ -60,12 +64,15 @@ uses eight candidates instead of search's default five, with the same ranking
 algorithm. This is an explicit context budget, not a confidence threshold.
 
 `similarity` remains cosine. The compatibility field `relevance` is an
-uncalibrated ranking value: cosine for dense, raw RRF for experimental hybrid.
+uncalibrated ranking value: cosine for dense/balanced retrieval, raw RRF for `rrf`.
 It is never used to decide whether evidence is sufficient.
 
-Hybrid remains an evaluation candidate with equal RRF votes, body-text lexical
-search and deterministic tie-breaking. It is not enabled in production code
-because a meaningful quality improvement has not been demonstrated.
+The default is now balanced dense/lexical retrieval, addressing the observed
+flood of similar meeting notes. PostgreSQL-normalized query terms are matched
+with OR; candidates rank by term coverage, length-normalized text relevance,
+and stable chunk ID. The two ranked lists are interleaved with duplicate IDs
+removed. `dense` and `rrf` remain selectable comparisons. This algorithm change
+has not been evaluated in a new live run; its quality impact is unverified.
 
 There is no reranker, generated query expansion, agent orchestration, framework
 adoption, filename weighting or question-specific runtime behavior. Gold
@@ -92,19 +99,21 @@ requested; and identify missing information for partial answers.
 
 The single generation call uses structured output, following
 [Google's structured output documentation](https://ai.google.dev/gemini-api/docs/generate-content/structured-output).
-Every returned claim must cite a real retrieved chunk and an exact contiguous
-quotation (whitespace normalized). Unknown IDs, missing citations, malformed
-output or invented quotations cause abstention. Only cited chunks are returned
-with their source IDs and quotations. Related but uncited documents are not
-presented as answer sources.
+Every returned claim selects one or more server-issued paragraph IDs from a
+schema-constrained enum. The server attaches the actual paragraph text from
+the retrieved snapshot, avoiding model transcription errors. Unknown IDs or
+malformed claims produce a verification error, distinct from evidence-based
+abstention. Only cited chunks/paragraphs are returned. Partial evidence is
+explicitly labeled. Legacy source/quote payloads still require provenance
+validation and cannot bypass source checking.
 
 Quote provenance **does not prove semantic entailment**: a model can attach a
 real quote to an unsupported claim. Prompt adherence, conflict resolution,
 factual correctness and semantic faithfulness need live evaluation and human
 review. The report leaves those metrics null instead of relabeling substring
-matches as correctness. Strict quotation validation can also increase false
-abstentions. Its answer-quality impact remains unverified with a current key;
-evaluation is separate from local startup.
+matches as correctness. The paragraph-ID protocol is intended to remove a
+formatting failure mode; its end-to-end quality impact remains unverified.
+Evaluation is separate from local startup.
 
 ## Measured before/after and validation
 

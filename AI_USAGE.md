@@ -10,6 +10,10 @@
 > refactoring, test implementation and documentation; no live answer-quality
 > improvement was established in that audit: its API request used the outdated
 > local key. Evaluation is optional and separate from the current local setup.
+> A subsequent user-generated RAG report completed 33 cases and informed the
+> [complementary-evidence follow-up](docs/evaluation/2026-10-28-user-run-analysis.md).
+> That follow-up adds balanced retrieval and paragraph-ID citations; its changes
+> have not been tested or evaluated in a new model run.
 
 AI tools (Claude, Cursor, Copilot) were used heavily as an active pair-programming companion throughout this project. We worked side-by-side to write code, design the RAG pipeline, build components, iterate on complex logic, and debug deployment issues.
 

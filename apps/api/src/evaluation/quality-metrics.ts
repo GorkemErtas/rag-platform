@@ -27,6 +27,8 @@ export function retrievalMetrics(results: SearchResult[], gold: QualityCase, k: 
 
 export function generationMetrics(response: ChatResponse, retrieved: SearchResult[], gold: QualityCase) {
   const shouldAnswer = gold.answerability !== "none";
+  const systemFailure = response.status === "error" || ["invalid-generation", "index-not-ready", "context-unavailable"].includes(response.reason ?? "");
+  const partialAnswer = response.status === "partial" || Boolean(response.missingInformation);
   const normalizedAnswer = normalizePassage(response.answer).toLowerCase();
   const matchedFacts = response.answered ? gold.facts.filter((group) => group.some((phrase) => normalizedAnswer.includes(phrase.toLowerCase()))).length : 0;
   const returned = new Map(response.sources.map((source) => [source.sourceId, source]));
@@ -40,16 +42,26 @@ export function generationMetrics(response: ChatResponse, retrieved: SearchResul
       normalizePassage(quote).length > 0 && normalizePassage(result.content).includes(normalizePassage(quote)));
   }) : null;
   const citedPaths = new Set(response.sources.map((source) => source.path));
+  const allExpectedSourcesCited = shouldAnswer ? gold.evidence.every((evidence) => citedPaths.has(evidence.path)) : null;
+  const forbiddenDetailsFound = (gold.forbidden ?? []).filter((phrase) => normalizedAnswer.includes(phrase.toLowerCase()));
   return {
-    answerabilityCorrect: response.answered === shouldAnswer,
+    answerabilityCorrect: !systemFailure && response.answered === shouldAnswer,
+    answerStatus: systemFailure ? "error" : partialAnswer ? "partial" : response.answered ? "answered" : "unanswered",
+    systemFailure,
+    requiresAbstention: !shouldAnswer,
     expectedFactCoverageProxy: ratio(matchedFacts, gold.facts.length),
-    allExpectedSourcesCited: shouldAnswer ? gold.evidence.every((evidence) => citedPaths.has(evidence.path)) : null,
+    allExpectedSourcesCited,
+    completeAnswerProxy: gold.answerability === "full"
+      ? response.answered && !systemFailure && !partialAnswer && matchedFacts === gold.facts.length &&
+        allExpectedSourcesCited === true && citationValidity === true && quoteProvenance === true && forbiddenDetailsFound.length === 0
+      : null,
+    partialAnswerToFullQuestion: gold.answerability === "full" && response.answered && partialAnswer,
     citationValidity,
     quoteProvenance,
     partialLimitationExplicit: gold.answerability === "partial" ? Boolean(response.missingInformation) : null,
-    forbiddenDetailsFound: (gold.forbidden ?? []).filter((phrase) => normalizedAnswer.includes(phrase.toLowerCase())),
-    correctAbstention: !shouldAnswer && !response.answered,
-    falsePositiveAbstention: shouldAnswer && !response.answered,
+    forbiddenDetailsFound,
+    correctAbstention: !shouldAnswer && !response.answered && !systemFailure,
+    falsePositiveAbstention: shouldAnswer && !response.answered && !systemFailure,
     falseNegativeAbstention: !shouldAnswer && response.answered,
     // Matching a quote proves provenance, not that the claim follows from it.
     factualCorrectness: null,
@@ -70,10 +82,13 @@ export function summarizeGeneration(rows: ReturnType<typeof generationMetrics>[]
     cases: rows.length,
     answerabilityAccuracy: mean(rows.map((row) => Number(row.answerabilityCorrect))),
     expectedFactCoverageProxy: mean(rows.map((row) => row.expectedFactCoverageProxy)),
+    completeAnswerRateProxy: mean(rows.map((row) => row.completeAnswerProxy === null ? null : Number(row.completeAnswerProxy))),
+    partialAnswersToFullQuestions: rows.filter((row) => row.partialAnswerToFullQuestion).length,
+    systemFailures: rows.filter((row) => row.systemFailure).length,
     citationValidity: mean(rows.map((row) => row.citationValidity === null ? null : Number(row.citationValidity))),
     quoteProvenance: mean(rows.map((row) => row.quoteProvenance === null ? null : Number(row.quoteProvenance))),
     abstentionPrecision: ratio(correct, correct + falsePositive),
-    abstentionRecall: ratio(correct, correct + falseNegative),
+    abstentionRecall: ratio(correct, rows.filter((row) => row.requiresAbstention).length),
     falsePositiveAbstentions: falsePositive,
     falseNegativeAbstentions: falseNegative,
     factualCorrectness: null,

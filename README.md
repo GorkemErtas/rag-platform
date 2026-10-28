@@ -4,7 +4,7 @@ A full-stack Retrieval-Augmented Generation (RAG) application built for
 the Playable Factory AI Software Engineer case study.
 
 The application indexes the provided document corpus, retrieves relevant
-passages using dense semantic search, and generates evidence-backed answers with
+passages using balanced semantic and lexical search, and generates evidence-backed answers with
 citations to source documents. It also includes role-based access
 control, an admin dashboard, an MCP search interface and optional retrieval
 evaluation. The current setup runs locally with Docker PostgreSQL, an Express
@@ -15,9 +15,9 @@ API and a Next.js frontend.
 -   Repeatable document ingestion with observable ingestion status
 -   Document chunking and Gemini embedding generation
 -   PostgreSQL + pgvector vector storage
--   One dense retrieval path shared by chat, HTTP search and MCP
--   Experimental lexical + raw RRF hybrid retrieval for evaluation
--   Structured answers with validated source IDs and exact quotations
+-   One configured retrieval path shared by chat, HTTP search and MCP
+-   Balanced dense/lexical candidates, with dense and RRF comparison modes
+-   Structured answers citing server-issued paragraph IDs and source quotations
 -   Evidence-based abstention and explicit limitations for partial answers
 -   Atomic reindexing, unchanged-document skipping and configuration tracking
 -   Authentication and role-based authorization for `USER` and `ADMIN`
@@ -33,7 +33,7 @@ API and a Next.js frontend.
 
 The revised evaluation checks source recall/precision, MRR, supporting passage
 coverage, generated fact coverage, citation validity and abstention errors.
-It separates seven tuning cases from 33 held-out cases. Dense and hybrid use
+It separates eight tuning cases from 32 held-out cases. Dense and hybrid use
 the same embedding and index snapshot. Search scores are ranking signals;
 answerability is decided from supporting evidence, without a cosine cutoff.
 
@@ -43,9 +43,12 @@ documents and all 643 paragraphs intact, with 142 chunks. These are measured
 fragmentation improvements, not retrieval or answer accuracy claims.
 
 The earlier audit's API evaluation used an outdated local Gemini key and stopped
-before any case completed. That historical result does not describe the current
-key or require evaluation before local startup. Evaluation is optional and is
-not part of `pnpm run setup` or `pnpm dev`.
+before any case completed. A later user-generated RAG report completed 33 cases:
+dense and the earlier RRF hybrid each found all required sources at K=5 in
+26/27 answerable cases. `company-pods` missed its source even at K=8. Those are
+results for the previous implementation, not measurements of the new changes.
+See the [report analysis](docs/evaluation/2026-10-28-user-run-analysis.md).
+Evaluation is optional and is not part of `pnpm run setup` or `pnpm dev`.
 
 ``` bash
 pnpm --filter @playable-factory/api test:evaluation
@@ -61,7 +64,7 @@ recorded before/after results and local reindexing requirements, and the
 **Frontend:** Next.js, React, TypeScript, Tailwind CSS\
 **Backend:** Node.js, Express, TypeScript, Drizzle ORM\
 **AI & Retrieval:** Google Gemini, PostgreSQL, pgvector, PostgreSQL
-full-text search (experimental), cosine similarity, raw RRF\
+full-text search, cosine similarity, balanced candidate selection, raw RRF\
 **Local infrastructure:** pnpm workspaces, Docker Compose, Model Context Protocol (MCP)
 
 ## Project Structure
@@ -283,19 +286,30 @@ frontend origin. Docker exposes PostgreSQL only on the local loopback address;
 
 ### Retrieval
 
-Dense semantic retrieval is the default across chat, search and MCP.
-Body-text lexical search with equal-weight RRF remains an evaluation candidate.
-It will require representative held-out evidence before becoming a default.
-Query rewriting and question-specific ranking boosts were removed.
+`RETRIEVAL_MODE=hybrid` is the default across chat, search and MCP. It alternates
+dense and lexical candidates, emitting each chunk once. This gives lexical-only
+evidence a place alongside dense hits rather than letting similar reports
+occupy the entire context. Lexical search accepts any normalized query term,
+ranks term coverage first, then length-normalized PostgreSQL text relevance.
+It does not require every word in a natural question to appear in one document.
+
+`RETRIEVAL_MODE=dense` retains the semantic baseline. `rrf` exposes equal-weight
+RRF over the corrected candidate lists. No query rewriting, question-specific
+ranking rules, generated summaries or additional model calls were added.
+Balanced retrieval is a targeted correction for the observed failure; its
+overall before/after quality has not been measured in this change.
 
 ### Abstention
 
 The generator must answer exclusively from retrieved evidence, cite every
-claim and identify missing requested details. The server rejects malformed
-claims, unknown source IDs and quotations absent from the cited passages.
-Quote provenance is validated locally; factual correctness and semantic
+claim using a supplied paragraph ID and identify missing requested details.
+The server resolves those IDs to the original paragraph text; it does not ask
+the model to reproduce quotations. Unknown IDs and malformed output produce a
+verification error, not an assertion that the knowledge base lacks an answer.
+Partial answers are explicitly labeled. Quote provenance is guaranteed by
+source lookup; factual correctness and semantic
 entailment still require live evaluation and human review. Similarity and
-RRF scores are never treated as calibrated answer confidence.
+ranking scores are never treated as calibrated answer confidence.
 
 ### Chunking
 
