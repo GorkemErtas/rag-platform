@@ -23,19 +23,16 @@ chatRouter.post("/", requireAuth, async (req, res) => {
 
     const result = await answerQuestion(question);
 
-    await db.insert(searchLogs).values({
-      userId: req.user!.id,
-      query: question,
-      resultCount: result.sources.length,
-      answered: result.answered,
-    });
+    try {
+      await db.insert(searchLogs).values({
+        userId: req.user!.id, query: question,
+        resultCount: result.sources.length, answered: result.answered,
+      });
+    } catch (error) {
+      console.error("Failed to record chat analytics:", error);
+    }
 
-    const response: ChatResponse = {
-      answer: result.answer,
-      answered: result.answered,
-      sources: result.sources,
-      ...(result.missingInformation ? { missingInformation: result.missingInformation } : {}),
-    };
+    const response: ChatResponse = result;
 
     res.json(response);
   } catch (error) {

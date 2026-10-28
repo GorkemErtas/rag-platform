@@ -298,7 +298,9 @@ function AnswerPanel({
         </div>
 
         <h2 className="text-base font-semibold text-text-primary">
-          Not enough information
+          {result.reason === "index-not-ready" ? "Knowledge base not ready"
+            : result.status === "error" ? "Answer could not be verified"
+            : "Not enough information"}
         </h2>
 
         <p className="mt-2 max-w-md text-sm leading-6 text-text-secondary">
@@ -311,9 +313,9 @@ function AnswerPanel({
   return (
     <div>
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-xs font-medium text-success">
-          <span className="h-1.5 w-1.5 rounded-full bg-success" />
-          Grounded answer
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${result.missingInformation ? "bg-amber-50 text-amber-800" : "bg-success-soft text-success"}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${result.missingInformation ? "bg-amber-500" : "bg-success"}`} />
+          {result.missingInformation ? "Partial answer" : "Supported answer"}
         </span>
       </div>
 
@@ -329,7 +331,7 @@ function AnswerPanel({
             </h2>
 
             <span className="text-xs text-text-muted">
-              {result.sources.length} sources
+              {result.sources.length} source{result.sources.length === 1 ? "" : "s"}
             </span>
           </div>
 
