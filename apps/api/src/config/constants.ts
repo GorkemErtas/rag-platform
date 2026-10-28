@@ -10,6 +10,7 @@ export const EMBEDDING_CONFIG = {
 } as const;
 
 export const RETRIEVAL_CONFIG = {
+  // Historical threshold retained only until evaluation runners are replaced.
   defaultTopK: 5,
   minSimilarity: 0.65,
   maxSearchLimit: 20,
@@ -24,4 +25,10 @@ export const RETRIEVAL_CONFIG = {
   candidateMultiplier: 4,
   minCandidateCount: 20,
   maxCandidateCount: 50,
+} as const;
+
+export const CHUNKING_CONFIG = {
+  maxCharacters: 1200,
+  overlap: 0,
+  version: "paragraph-v2",
 } as const;

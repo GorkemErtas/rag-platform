@@ -1,97 +1,64 @@
+import { CHUNKING_CONFIG } from "../config/constants.js";
+
 export interface DocumentChunk {
   index: number;
   content: string;
 }
 
-const DEFAULT_CHUNK_SIZE = 400;
-const DEFAULT_CHUNK_OVERLAP = 80;
-
 export function chunkDocument(
   content: string,
-  chunkSize = DEFAULT_CHUNK_SIZE,
-  overlap = DEFAULT_CHUNK_OVERLAP,
+  chunkSize: number = CHUNKING_CONFIG.maxCharacters,
+  overlap: number = CHUNKING_CONFIG.overlap,
 ): DocumentChunk[] {
+  if (!Number.isInteger(chunkSize) || chunkSize < 1 ||
+      !Number.isInteger(overlap) || overlap < 0 || overlap >= chunkSize) {
+    throw new Error("Chunk size must be a positive integer and overlap must be between 0 and size - 1");
+  }
   const normalized = content.replace(/\r\n/g, "\n").trim();
+  if (!normalized) return [];
+  if (normalized.length <= chunkSize) return [{ index: 0, content: normalized }];
 
-  if (!normalized) {
-    return [];
-  }
-
-  if (overlap >= chunkSize) {
-    throw new Error("Chunk overlap must be smaller than chunk size");
-  }
-
-  const paragraphs = normalized
-    .split(/\n\s*\n/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
-
-  const chunks: DocumentChunk[] = [];
-  let buffer = "";
-
-  const pushChunk = () => {
-    const chunk = buffer.trim();
-
-    if (!chunk) {
-      return;
+  // Keep a heading with its following paragraph/list where it fits.
+  const blocks: string[] = [];
+  let heading = "";
+  for (const paragraph of normalized.split(/\n\s*\n/)) {
+    const block = paragraph.trim();
+    if (/^#{1,6} [^\n]+$/.test(block)) {
+      heading = heading ? `${heading}\n\n${block}` : block;
+    } else if (block) {
+      blocks.push(heading ? `${heading}\n\n${block}` : block);
+      heading = "";
     }
+  }
+  if (heading) blocks.push(heading);
 
-    chunks.push({
-      index: chunks.length,
-      content: chunk,
-    });
+  const pieces: string[] = [];
+  for (const block of blocks) {
+    let remaining = block;
+    while (remaining.length > chunkSize) {
+      const window = remaining.slice(0, chunkSize + 1);
+      let end = window.lastIndexOf("\n", chunkSize);
+      if (end < chunkSize / 2) end = window.lastIndexOf(" ", chunkSize);
+      if (end <= overlap) end = chunkSize;
+      pieces.push(remaining.slice(0, end).trim());
+      remaining = remaining.slice(end - overlap).trimStart();
+    }
+    if (remaining) pieces.push(remaining);
+  }
 
-    buffer = chunk.slice(-overlap);
-  };
-
-  for (const paragraph of paragraphs) {
-    if (paragraph.length > chunkSize) {
-      if (buffer.trim()) {
-        pushChunk();
-      }
-
-      let start = 0;
-
-      while (start < paragraph.length) {
-        const end = Math.min(start + chunkSize, paragraph.length);
-        const chunk = paragraph.slice(start, end).trim();
-
-        if (chunk) {
-          chunks.push({
-            index: chunks.length,
-            content: chunk,
-          });
-        }
-
-        if (end === paragraph.length) {
-          break;
-        }
-
-        start = end - overlap;
-      }
-
-      buffer = "";
+  const contents: string[] = [];
+  let buffer = "";
+  for (const piece of pieces) {
+    const candidate = buffer ? `${buffer}\n\n${piece}` : piece;
+    if (candidate.length <= chunkSize) {
+      buffer = candidate;
       continue;
     }
-
-    const candidate = buffer
-      ? `${buffer}\n\n${paragraph}`
-      : paragraph;
-
-    if (candidate.length > chunkSize && buffer) {
-      pushChunk();
-      buffer = `${buffer}\n\n${paragraph}`;
-    } else {
-      buffer = candidate;
-    }
+    contents.push(buffer);
+    const tail = overlap > 0 ? buffer.slice(-overlap) : "";
+    buffer = tail && tail.length + 2 + piece.length <= chunkSize
+      ? `${tail}\n\n${piece}` : piece;
   }
-
-  if (buffer.trim()) {
-    chunks.push({
-      index: chunks.length,
-      content: buffer.trim(),
-    });
-  }
-
-  return chunks;
+  if (buffer) contents.push(buffer);
+  return contents.map((content, index) => ({ index, content }));
 }

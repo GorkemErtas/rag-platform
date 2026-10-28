@@ -35,7 +35,7 @@ export async function loadCorpus(
   corpusPath: string,
 ): Promise<CorpusDocument[]> {
   const absoluteCorpusPath = path.resolve(corpusPath);
-  const files = await findMarkdownFiles(absoluteCorpusPath);
+  const files = (await findMarkdownFiles(absoluteCorpusPath)).sort();
 
   return Promise.all(
     files.map(async (filePath) => {
