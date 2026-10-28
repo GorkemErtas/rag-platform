@@ -27,3 +27,35 @@ export function fuseRankings(rankings: SearchResult[][], limit: number): SearchR
     .slice(0, limit)
     .map(({ result, score }) => ({ ...result, relevance: score }));
 }
+
+/**
+ * Alternate candidate lists, preserving each list's order and emitting chunks
+ * only once. This protects lexical-only evidence from a crowd of dense hits
+ * that repeat the same boilerplate. There are no document-name/intent boosts.
+ */
+export function balanceRankings(dense: SearchResult[], lexical: SearchResult[], limit: number): SearchResult[] {
+  const denseRanks = new Map(dense.map((result, index) => [result.chunkId, index + 1]));
+  const lexicalRanks = new Map(lexical.map((result, index) => [result.chunkId, index + 1]));
+  const emitted = new Set<number>();
+  const results: SearchResult[] = [];
+  const queues = [dense, lexical];
+  const positions = [0, 0];
+  while (results.length < limit) {
+    let added = false;
+    for (const [lane, ranking] of queues.entries()) {
+      while (positions[lane] < ranking.length && emitted.has(ranking[positions[lane]].chunkId)) positions[lane] += 1;
+      const result = ranking[positions[lane]];
+      if (!result) continue;
+      positions[lane] += 1;
+      emitted.add(result.chunkId);
+      results.push({
+        ...result, relevance: result.similarity, retrievalMethod: "hybrid",
+        denseRank: denseRanks.get(result.chunkId), lexicalRank: lexicalRanks.get(result.chunkId),
+      });
+      added = true;
+      if (results.length === limit) break;
+    }
+    if (!added) break;
+  }
+  return results;
+}

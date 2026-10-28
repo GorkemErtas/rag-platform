@@ -10,12 +10,15 @@ export const EMBEDDING_CONFIG = {
 } as const;
 
 export const RETRIEVAL_CONFIG = {
+  defaultMode: "hybrid",
   defaultTopK: 5,
   maxSearchLimit: 20,
 
   rrfK: 60,
   maxCandidateCount: 50,
 } as const;
+
+export type RetrievalMode = "dense" | "hybrid" | "rrf";
 
 export const RAG_CONFIG = {
   maxContextChunks: 8,
