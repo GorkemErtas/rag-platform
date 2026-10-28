@@ -10,6 +10,8 @@ type EmbeddingType = "document" | "query";
 interface GenerateEmbeddingOptions {
   type: EmbeddingType;
   title?: string;
+  /** Evaluation instrumentation; includes retries, never changes ranking. */
+  onRequest?: () => void;
 }
 
 export function normalizeEmbedding(values: number[]): number[] {
@@ -80,6 +82,7 @@ async function requestEmbedding(
   ai ??= new GoogleGenAI({ apiKey: env.geminiApiKey });
   for (let attempt = 0; attempt <= EMBEDDING_CONFIG.maxRetries; attempt += 1) {
     try {
+      options.onRequest?.();
       return await ai.models.embedContent({
         model: env.geminiEmbeddingModel,
         contents: text,

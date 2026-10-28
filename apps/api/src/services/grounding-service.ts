@@ -73,6 +73,7 @@ export function parseGroundedAnswer(raw: string, sources: EvidenceSource[]): {
     lines.push(`${claim.text.trim()} ${[...claimSources].map((id) => `[Source ${id}]`).join(" ")}`);
   }
   const missing = body.missingInformation.trim();
+  if (/\[Source\b/i.test(missing)) return invalid();
   if (missing) lines.push(`Not established by the retrieved sources: ${missing}`);
   return {
     response: { answered: true, answer: lines.join("\n\n"), sources: [...cited.values()], ...(missing ? { missingInformation: missing } : {}) },

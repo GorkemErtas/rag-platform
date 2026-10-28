@@ -63,7 +63,7 @@ export interface GenerationTelemetry {
 }
 
 /** Same generation path for the application and controlled strategy comparisons. */
-export async function answerUsingEvidence(question: string, results: SearchResult[]): Promise<{
+export async function answerUsingEvidence(question: string, results: SearchResult[], onRequest?: () => void): Promise<{
   response: ChatResponse;
   telemetry: GenerationTelemetry;
 }> {
@@ -76,6 +76,7 @@ export async function answerUsingEvidence(question: string, results: SearchResul
   if (!env.geminiApiKey) throw new Error("GEMINI_API_KEY is not defined");
   ai ??= new GoogleGenAI({ apiKey: env.geminiApiKey });
   const started = performance.now();
+  onRequest?.();
   const generated = await ai.models.generateContent({
     model: env.geminiChatModel,
     contents: JSON.stringify({

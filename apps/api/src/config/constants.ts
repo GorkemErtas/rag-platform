@@ -10,9 +10,7 @@ export const EMBEDDING_CONFIG = {
 } as const;
 
 export const RETRIEVAL_CONFIG = {
-  // Used by historical evaluation runners only, never runtime answerability.
   defaultTopK: 5,
-  minSimilarity: 0.65,
   maxSearchLimit: 20,
 
   rrfK: 60,

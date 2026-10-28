@@ -4,8 +4,8 @@ import { env } from "../config/env.js";
 import { loadCorpus } from "../services/corpus-service.js";
 import { chunkDocument } from "../services/chunking-service.js";
 
-// Run on the incoming revision before changing chunking. This measures evidence
-// fragmentation, not semantic retrieval or generated answer quality.
+// Run on each revision to compare evidence fragmentation. This does not measure
+// semantic retrieval or generated answer quality.
 const documents = (await loadCorpus(env.corpusPath)).sort((a, b) => a.path.localeCompare(b.path));
 const rows = documents.map((document) => {
   const chunks = chunkDocument(document.content);

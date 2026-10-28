@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "state": "failed",
+  "createdAt": "2026-10-28T09:39:45.167Z",
+  "mode": "retrieval",
+  "split": "held-out",
+  "cases": 33,
+  "datasetHash": "7441d0d543502e07c935422c8ceb6205a00c7c9540cfae578f91668392425739",
+  "embeddingModel": "gemini-embedding-001",
+  "chatModel": "gemini-3.6-flash",
+  "dimensions": 768,
+  "indexingFingerprint": "d350f4f0614cb51e1c937b26153b95f1b89f3b13b507348c970e29b51a39a1c5",
+  "context": {
+    "maxContextChunks": 8,
+    "maxContextCharacters": 12000
+  },
+  "notes": [
+    "Both strategies share one query embedding, corpus/index snapshot, K and generation settings.",
+    "Negative retrieval cases have null relevance metrics; abstention is measured only after generation.",
+    "Fact coverage is a lexical proxy. Factual correctness and semantic faithfulness require human review.",
+    "Historical end-to-end revisions require their own recorded index and matching corpus. No historical accuracy is inferred here.",
+    "Embedding token estimates use ceil(question characters / 4); generation tokens come from provider usage."
+  ],
+  "rows": [],
+  "corpusHash": "006e511032561a03de1533d007c5ad64bbf7fbad43927d0173899e675c85482e",
+  "pricing": {
+    "inputRate": null,
+    "outputRate": null,
+    "embeddingRate": null,
+    "currency": "USD",
+    "source": "operator supplied, per million tokens"
+  },
+  "embeddingApiRequests": 1,
+  "error": "{\"error\":{\"code\":401,\"message\":\"API key not valid. Please pass a valid API key.\",\"status\":\"UNAUTHENTICATED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"ACCESS_TOKEN_TYPE_UNSUPPORTED\",\"metadata\":{\"method\":\"google.ai.generativelanguage.v1beta.GenerativeService.BatchEmbedContents\",\"service\":\"generativelanguage.googleapis.com\"}}]}}"
+}

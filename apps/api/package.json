@@ -16,13 +16,10 @@
     "ingest": "tsx src/scripts/ingest.ts",
     "test:retrieval": "tsx src/scripts/test-retrieval.ts",
     "test:rag": "tsx src/scripts/test-rag.ts",
-    "test:evaluation": "tsx src/evaluation/retrieval-evaluation.ts",
+    "test:evaluation": "tsx src/evaluation/quality-evaluation.ts --mode retrieval",
     "db:seed": "tsx src/scripts/seed.ts",
-    "test:evaluation:v2": "tsx src/evaluation/retrieval-evaluation-v2.ts",
-    "test:rag:evaluation": "tsx src/evaluation/rag-evaluation.ts",
-    "test:evaluation:v3": "tsx src/evaluation/retrieval-evaluation-v3.ts",
-    "test:rag:evaluation:v3": "tsx src/evaluation/rag-evaluation-v3.ts",
-    "test:rag:evaluation:v4": "tsx src/evaluation/rag-evaluation-v4.ts"
+    "test:rag:evaluation": "tsx src/evaluation/quality-evaluation.ts --mode rag",
+    "test:chunking": "tsx src/evaluation/corpus-baseline.ts"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",
@@ -44,6 +41,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.5",
     "tsx": "^4.23.12",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "8.66.0"
   }
 }

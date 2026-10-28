@@ -49,7 +49,7 @@ test("malformed or uncited claims cannot become grounded answers", () => {
   const context = buildEvidenceContext([passage(1)]);
   for (const raw of ["plain text", "null", "{}", json([]), json([{ text: "5 MB", citations: [] }]),
     json([claim(), { text: "Invented fact.", citations: [] }]), json([claim("chunk-1", "5 MB", "Fake [Source chunk-99]")]),
-    json([claim()], false)]) {
+    json([claim()], false), json([claim()], true, "Fake [Source chunk-99]")]) {
     assert.equal(parseGroundedAnswer(raw, context).response.answered, false, raw);
   }
 });

@@ -1,5 +1,4 @@
 import type {
-  ChatRequest,
   ChatResponse,
 } from "@playable-factory/shared";
 import { Router } from "express";
@@ -13,8 +12,7 @@ export const chatRouter = Router();
 
 chatRouter.post("/", requireAuth, async (req, res) => {
   try {
-    const body = req.body as Partial<ChatRequest>;
-    const question = typeof body.question === "string" ? body.question.trim() : "";
+    const question = typeof req.body?.question === "string" ? req.body.question.trim() : "";
 
     if (!question) {
       res.status(400).json({
