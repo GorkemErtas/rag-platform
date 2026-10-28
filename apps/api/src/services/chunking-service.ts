@@ -3,8 +3,8 @@ export interface DocumentChunk {
   content: string;
 }
 
-const DEFAULT_CHUNK_SIZE = 1200;
-const DEFAULT_CHUNK_OVERLAP = 200;
+const DEFAULT_CHUNK_SIZE = 400;
+const DEFAULT_CHUNK_OVERLAP = 80;
 
 export function chunkDocument(
   content: string,

@@ -1,7 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 
 import { env } from "../config/env.js";
-import { searchDocuments } from "./retrieval-service.js";
+import {
+  getExpandedChunkContext,
+  searchDocumentsMultiQuery,
+} from "./retrieval-service.js";
 import { RETRIEVAL_CONFIG } from "../config/constants.js";
 
 if (!env.geminiApiKey) {
@@ -46,30 +49,62 @@ export async function answerQuestion(
     throw new Error("Question cannot be empty");
   }
 
-  const results = await searchDocuments(
-    normalizedQuestion,
-    RETRIEVAL_CONFIG.defaultTopK,
-  );
+  const RAG_RETRIEVAL_LIMIT = 8;
 
-  const relevantResults = results.filter(
-    (result) => result.similarity >= RETRIEVAL_CONFIG.minSimilarity,
-  );
+  const results = await searchDocumentsMultiQuery(
+  normalizedQuestion,
+  RAG_RETRIEVAL_LIMIT,
+);
 
-  if (relevantResults.length === 0) {
-    return createNoAnswerResponse();
-  }
+  if (results.length === 0) {
+  return createNoAnswerResponse();
+}
 
-  const context = relevantResults
-    .map(
-      (result, index) => `
+const relevantResults = results;
+
+  const MAX_CHUNKS_PER_DOCUMENT = 2;
+
+const documentHitCounts = new Map<number, number>();
+
+const diversifiedResults = relevantResults.filter(
+  (result) => {
+    const currentCount =
+      documentHitCounts.get(result.documentId) ?? 0;
+
+    if (currentCount >= MAX_CHUNKS_PER_DOCUMENT) {
+      return false;
+    }
+
+    documentHitCounts.set(
+      result.documentId,
+      currentCount + 1,
+    );
+
+    return true;
+  },
+);
+
+const expandedSources = await Promise.all(
+  diversifiedResults.map(async (result) => ({
+    result,
+    content: await getExpandedChunkContext(
+      result.documentId,
+      result.chunkIndex,
+    ),
+  })),
+);
+
+const context = expandedSources
+  .map(
+    ({ result, content }, index) => `
 [Source ${index + 1}]
 Path: ${result.documentPath}
 Title: ${result.documentTitle ?? "Untitled"}
 Content:
-${result.content}
+${content}
 `.trim(),
-    )
-    .join("\n\n");
+  )
+  .join("\n\n");
 
   const prompt = `
 You are a retrieval-augmented assistant.
@@ -104,10 +139,19 @@ ${context}
   return createNoAnswerResponse();
 }
 
+  const uniqueSources = Array.from(
+    new Map(
+      diversifiedResults.map((result) => [
+        result.documentId,
+        result,
+      ]),
+    ).values(),
+  );
+
   return {
     answer: text,
     answered: true,
-    sources: relevantResults.map((result) => ({
+    sources: uniqueSources.map((result) => ({
       path: result.documentPath,
       title: result.documentTitle,
       chunkIndex: result.chunkIndex,

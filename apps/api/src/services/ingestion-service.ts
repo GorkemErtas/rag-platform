@@ -102,8 +102,15 @@ export async function ingestCorpus(): Promise<IngestionResult> {
         const chunksWithEmbeddings: ChunkWithEmbedding[] = [];
 
         for (const chunk of chunks) {
+          const embeddingText = `
+          Document: ${sourceDocument.title}
+          Path: ${sourceDocument.path}
+
+          ${chunk.content}
+          `.trim();
+
           const embedding = await generateEmbedding(
-            chunk.content,
+            embeddingText,
             {
               type: "document",
               title: sourceDocument.title,

@@ -1,11 +1,16 @@
 import type { SearchResult } from "@playable-factory/shared";
 import {
   and,
+  asc,
   cosineDistance,
   desc,
   eq,
+  gte,
+  lte,
   sql,
 } from "drizzle-orm";
+
+import { expandSearchQueries } from "./query-rewrite-service.js";
 
 import { db } from "../db/index.js";
 import {
@@ -171,6 +176,71 @@ export async function searchDocumentsDense(
   return runDenseSearch(queryEmbedding, limit);
 }
 
+function getQueryAwareMultiplier(
+  query: string,
+  result: SearchResult,
+): number {
+  const normalizedQuery = query.toLowerCase();
+
+  const searchableText = `
+    ${result.documentTitle ?? ""}
+    ${result.documentPath}
+    ${result.content}
+  `.toLowerCase();
+
+  let multiplier = 1;
+
+  // Current / latest intent
+  const asksForCurrent =
+    normalizedQuery.includes("current") ||
+    normalizedQuery.includes("latest") ||
+    normalizedQuery.includes("newest");
+
+  if (asksForCurrent) {
+    const isDeprecated =
+      searchableText.includes("deprecated") ||
+      searchableText.includes("legacy") ||
+      searchableText.includes("do not use");
+
+    const isCurrent =
+      searchableText.includes("(current)") ||
+      searchableText.includes("current sdk") ||
+      searchableText.includes("current version") ||
+      searchableText.includes("supersedes");
+
+    if (isCurrent) {
+      multiplier *= 1.15;
+    }
+
+    if (isDeprecated) {
+      multiplier *= 0.85;
+    }
+  }
+
+  // Incident / root-cause intent
+  const asksForIncidentCause =
+    normalizedQuery.includes("why") ||
+    normalizedQuery.includes("caused") ||
+    normalizedQuery.includes("cause") ||
+    normalizedQuery.includes("rejected") ||
+    normalizedQuery.includes("rejection") ||
+    normalizedQuery.includes("incident") ||
+    normalizedQuery.includes("what happened");
+
+  if (asksForIncidentCause) {
+    const isIncidentDocument =
+      searchableText.includes("incident") ||
+      searchableText.includes("postmortem") ||
+      searchableText.includes("root cause");
+
+    if (isIncidentDocument) {
+      multiplier *= 1.15;
+    }
+  }
+
+  return multiplier;
+}
+
 export async function searchDocumentsHybrid(
   query: string,
   limit: number = RETRIEVAL_CONFIG.defaultTopK,
@@ -245,9 +315,18 @@ export async function searchDocumentsHybrid(
   });
 
     const rankedResults = [...fusedResults.values()]
+  .map((entry) => ({
+    ...entry,
+    adjustedScore:
+  entry.score *
+  getQueryAwareMultiplier(
+  normalizedQuery,
+  entry.result,
+)
+  }))
   .sort((left, right) => {
-    if (right.score !== left.score) {
-      return right.score - left.score;
+    if (right.adjustedScore !== left.adjustedScore) {
+      return right.adjustedScore - left.adjustedScore;
     }
 
     return (
@@ -257,13 +336,15 @@ export async function searchDocumentsHybrid(
   })
   .slice(0, limit);
 
-const topHybridScore = rankedResults[0]?.score ?? 0;
+const topHybridScore =
+  rankedResults[0]?.adjustedScore ?? 0;
 
-return rankedResults.map(({ result, score }) => {
+return rankedResults.map(
+  ({ result, adjustedScore }) => {
   const normalizedHybridScore =
-    topHybridScore > 0
-      ? score / topHybridScore
-      : 0;
+  topHybridScore > 0
+    ? adjustedScore / topHybridScore
+    : 0;
 
   const relevance =
     RETRIEVAL_CONFIG.denseRelevanceWeight *
@@ -276,6 +357,144 @@ return rankedResults.map(({ result, score }) => {
     relevance: Math.min(Math.max(relevance, 0), 1),
   };
 });
+}
+
+export async function getExpandedChunkContext(
+  documentId: number,
+  chunkIndex: number,
+  windowSize = 1,
+): Promise<string> {
+  const chunks = await db
+    .select({
+      chunkIndex: documentChunks.chunkIndex,
+      content: documentChunks.content,
+    })
+    .from(documentChunks)
+    .where(
+      and(
+        eq(documentChunks.documentId, documentId),
+        gte(
+          documentChunks.chunkIndex,
+          Math.max(0, chunkIndex - windowSize),
+        ),
+        lte(
+          documentChunks.chunkIndex,
+          chunkIndex + windowSize,
+        ),
+      ),
+    )
+    .orderBy(asc(documentChunks.chunkIndex));
+
+  return chunks
+    .map((chunk) => chunk.content)
+    .join("\n\n");
+}
+
+export async function searchDocumentsMultiQuery(
+  query: string,
+  limit: number = RETRIEVAL_CONFIG.defaultTopK,
+): Promise<SearchResult[]> {
+  const normalizedQuery = validateSearch(
+    query,
+    limit,
+  );
+
+  const expandedQueries =
+    await expandSearchQueries(normalizedQuery);
+
+  const perQueryLimit = Math.min(
+    RETRIEVAL_CONFIG.maxSearchLimit,
+    Math.max(limit * 2, 10),
+  );
+
+  const resultSets = await Promise.all(
+    expandedQueries.map((expandedQuery) =>
+      searchDocumentsHybrid(
+        expandedQuery,
+        perQueryLimit,
+      ),
+    ),
+  );
+
+  const fusedResults = new Map<
+    number,
+    {
+      result: SearchResult;
+      score: number;
+    }
+  >();
+
+  resultSets.forEach((results) => {
+    results.forEach((result, index) => {
+      const rank = index + 1;
+
+      const score =
+        1 /
+        (RETRIEVAL_CONFIG.rrfK + rank);
+
+      const existing =
+        fusedResults.get(result.chunkId);
+
+      if (existing) {
+        existing.score += score;
+
+        if (
+          result.relevance >
+          existing.result.relevance
+        ) {
+          existing.result = result;
+        }
+
+        return;
+      }
+
+      fusedResults.set(result.chunkId, {
+        result,
+        score,
+      });
+    });
+  });
+
+  const rankedResults = [
+    ...fusedResults.values(),
+  ]
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      return (
+        right.result.relevance -
+        left.result.relevance
+      );
+    })
+    .slice(0, limit);
+
+  const topScore =
+    rankedResults[0]?.score ?? 0;
+
+  return rankedResults.map(
+    ({ result, score }) => {
+      const normalizedFusionScore =
+        topScore > 0
+          ? score / topScore
+          : 0;
+
+      return {
+        ...result,
+
+        relevance: Math.min(
+          Math.max(
+            0.7 * result.relevance +
+              0.3 *
+                normalizedFusionScore,
+            0,
+          ),
+          1,
+        ),
+      };
+    },
+  );
 }
 
 export async function searchDocuments(
