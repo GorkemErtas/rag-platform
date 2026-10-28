@@ -6,8 +6,9 @@ the Playable Factory AI Software Engineer case study.
 The application indexes the provided document corpus, retrieves relevant
 passages using dense semantic search, and generates evidence-backed answers with
 citations to source documents. It also includes role-based access
-control, an admin dashboard, an MCP search interface, retrieval
-evaluation, and a live deployment.
+control, an admin dashboard, an MCP search interface and optional retrieval
+evaluation. The current setup runs locally with Docker PostgreSQL, an Express
+API and a Next.js frontend.
 
 ## Features
 
@@ -26,7 +27,7 @@ evaluation, and a live deployment.
 -   MCP search tool for external clients
 -   Forty corpus-verified evaluation cases with separate retrieval/generation metrics
 -   Responsive Next.js + Tailwind CSS interface
--   Live deployment
+-   Local development with a shared root `.env` file
 
 ## Retrieval Evaluation
 
@@ -41,9 +42,10 @@ On the checked-in corpus, the incoming chunker produced 455 chunks and split
 documents and all 643 paragraphs intact, with 142 chunks. These are measured
 fragmentation improvements, not retrieval or answer accuracy claims.
 
-Live evaluation is currently unverified: the configured Gemini key returned
-HTTP 401 before any case completed. Previous README accuracy figures came
-from a much smaller historical suite and are not evidence for this revision.
+The earlier audit's API evaluation used an outdated local Gemini key and stopped
+before any case completed. That historical result does not describe the current
+key or require evaluation before local startup. Evaluation is optional and is
+not part of `pnpm run setup` or `pnpm dev`.
 
 ``` bash
 pnpm --filter @playable-factory/api test:evaluation
@@ -51,7 +53,7 @@ pnpm --filter @playable-factory/api test:rag:evaluation
 ```
 
 See the [architecture audit](docs/RAG_ARCHITECTURE_AUDIT.md) for findings,
-recorded before/after results and deployment requirements, and the
+recorded before/after results and local reindexing requirements, and the
 [evaluation guide](docs/evaluation/README.md) for metric definitions and commands.
 
 ## Technology Stack
@@ -60,8 +62,7 @@ recorded before/after results and deployment requirements, and the
 **Backend:** Node.js, Express, TypeScript, Drizzle ORM\
 **AI & Retrieval:** Google Gemini, PostgreSQL, pgvector, PostgreSQL
 full-text search (experimental), cosine similarity, raw RRF\
-**Infrastructure:** pnpm workspaces, Docker Compose, Neon, Render,
-Vercel, Model Context Protocol (MCP)
+**Local infrastructure:** pnpm workspaces, Docker Compose, Model Context Protocol (MCP)
 
 ## Project Structure
 
@@ -77,10 +78,10 @@ packages/
 
 ## Prerequisites
 
--   Node.js
+-   Node.js 22.12 or later
 -   pnpm
 -   Docker / Docker Compose
--   Google Gemini API key
+-   Google Gemini API key for ingestion, search and chat
 
 ## Installation
 
@@ -94,32 +95,44 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Create `.env` from the included `.env.example` and provide the required
-values.
+For a new checkout, create the root `.env` from `.env.example`. Keep your
+existing `.env` when updating this checkout. Set `JWT_SECRET` to a long random
+value for login, and `MCP_SERVICE_TOKEN` if you will use MCP. The default
+database and service URLs already target your machine.
 
-``` bash
-cp .env.example .env
+``` powershell
+Copy-Item .env.example .env
 ```
 
-### 3. Start PostgreSQL
+Only ingestion, search and chat need a current `GEMINI_API_KEY`. Local database
+setup, demo user creation and server startup do not call Gemini. Next.js reads
+`NEXT_PUBLIC_API_URL` from the same root `.env`; restart `pnpm dev` after changing
+environment values.
+
+### 3. Prepare the local database and demo users
+
+Start Docker Desktop first, then run the project setup script:
 
 ``` bash
-docker compose up -d
+pnpm run setup
 ```
 
-Docker Compose provides the local PostgreSQL environment with pgvector
-support.
+This starts Docker PostgreSQL, waits for its healthcheck, builds the shared
+TypeScript package, applies migrations and seeds the demo users. It does not
+ingest documents, call Gemini or run tests. Existing PostgreSQL data is kept
+in the `postgres_data` Docker volume.
 
-### 4. Run migrations and seed demo users
+The database is available at `localhost:5433/playable_factory` with the local
+Docker credentials in `.env.example`. To manage it separately:
 
 ``` bash
-pnpm db:migrate
-pnpm db:seed
+pnpm db:up
+pnpm db:stop
 ```
 
-### 5. Index the corpus
+### 4. Index the corpus when your Gemini key is ready
 
-Point the configured corpus path at the provided dataset, then run:
+Update `GEMINI_API_KEY` in your root `.env`, then run:
 
 ``` bash
 pnpm ingest
@@ -133,26 +146,31 @@ checksums. New embeddings are prepared before atomically replacing each
 document's searchable content. Failed replacements preserve the previous
 index. Missing corpus files are reported and retained for explicit review.
 
-Upgrading an existing installation requires migration
-`0002_cultured_salo.sql` and one successful ingestion before switching to the
-new API: legacy documents have unknown embedding metadata and are excluded
-by the new retrieval implementation. See the audit's staged rollout steps.
+For an existing local database, `pnpm run setup` applies migration
+`0002_cultured_salo.sql`. Run `pnpm ingest` once after updating the key to rebuild
+legacy embedding metadata. Until then, login and the dashboard are available,
+but legacy chunks with unknown embedding metadata are excluded from search.
 
 ## Running the Application
 
-Start the API from the repository root:
+Start the API and frontend together from the repository root:
+
+```bash
+pnpm dev
+```
+
+Local addresses:
+
+- Frontend: http://localhost:3000
+- API: http://localhost:4000
+- API health: http://localhost:4000/health
+
+To run each server in its own terminal instead:
 
 ```bash
 pnpm dev:api
-```
-
-In a second terminal, start the frontend:
-
-```bash
 pnpm dev:web
 ```
-
-The API and frontend development URLs are printed in their respective terminals.
 
 To run the MCP server separately:
 
@@ -219,11 +237,11 @@ instead of generating an unsupported answer.
 The retrieval capability is also exposed through an MCP server for
 external MCP-compatible clients.
 
-For the deployed API, configure the local MCP process with:
+Configure MCP to call the local API using the root `.env`:
 
 ``` env
-MCP_API_BASE_URL=https://playable-factory-rag-case.onrender.com
-MCP_SERVICE_TOKEN=<provided-service-token>
+MCP_API_BASE_URL=http://127.0.0.1:4000
+MCP_SERVICE_TOKEN=<your-local-service-token>
 ```
 
 Start the MCP server:
@@ -238,35 +256,28 @@ To test the MCP server with MCP Inspector, open a second terminal and run:
 npx @modelcontextprotocol/inspector
 ```
 
-The MCP server runs locally over stdio and calls the deployed search API
-over HTTPS. It can be tested with an MCP-compatible client such as MCP
-Inspector. The service token authenticates MCP-to-API requests.
+The MCP server runs locally over stdio and calls the local search API. The
+service token authenticates MCP-to-API requests. MCP is optional and starts
+separately from `pnpm dev`.
 
-## Deployment
+## Local Architecture
 
 ``` text
 Browser
    |
    v
-Vercel (Next.js)
+localhost:3000 (Next.js)
    |
    v
-Render (Express API)
+localhost:4000 (Express API)
    |
    v
-Neon (PostgreSQL + pgvector)
+localhost:5433 (Docker PostgreSQL + pgvector)
 ```
 
-**Live frontend:**\
-https://playable-factory-rag-case-web.vercel.app
-
-**API health:**\
-https://playable-factory-rag-case.onrender.com/health
-
-Production secrets and connection strings are stored as environment
-variables on the relevant hosting platforms. The frontend is configured
-with the deployed API base URL, and the API CORS configuration allows
-the production frontend origin.
+The root `.env` configures the API, frontend and MCP. CORS allows the local
+frontend origin. Docker exposes PostgreSQL only on the local loopback address;
+`pnpm db:stop` stops it without deleting the indexed corpus or user accounts.
 
 ## Design Decisions
 
@@ -292,7 +303,9 @@ Documents below the configured chunk-size limit remain intact. Larger
 documents are split at heading, paragraph and line/word boundaries before embedding, avoiding
 unnecessary fragmentation of already-small source documents.
 
-### Validation
+### Optional Validation
+
+These commands are separate from local startup and only run when requested:
 
 ```bash
 pnpm --filter @playable-factory/shared build

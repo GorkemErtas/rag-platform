@@ -103,7 +103,8 @@ real quote to an unsupported claim. Prompt adherence, conflict resolution,
 factual correctness and semantic faithfulness need live evaluation and human
 review. The report leaves those metrics null instead of relabeling substring
 matches as correctness. Strict quotation validation can also increase false
-abstentions, and must be evaluated with valid credentials before deployment.
+abstentions. Its answer-quality impact remains unverified with a current key;
+evaluation is separate from local startup.
 
 ## Measured before/after and validation
 
@@ -146,31 +147,34 @@ See [evaluation instructions and metric definitions](evaluation/README.md),
 [revised report](evaluation/after-chunking.json), and
 [failed live run](evaluation/live-retrieval.json).
 
-## Migration and deployment
+## Local setup and reindexing
 
-1. Keep the existing application serving while preparing the new index.
-2. Install the updated workspace dependencies and build the shared package.
-3. Apply additive migration `0002_cultured_salo.sql` using `pnpm db:migrate`.
-   It adds nullable model/configuration metadata and a skipped-document counter;
-   it does not delete documents or embeddings.
-4. With valid credentials, run the new revision's `pnpm ingest` against the
-   intended database, using a direct PostgreSQL connection for DATABASE_URL.
-   The ingestion session advisory lock requires a stable database session;
-   transaction-pooling endpoints are not suitable for ingestion. Admin-triggered
-   ingestion has the same connection requirement. All legacy rows require one rebuild because their
-   configuration is unknown. Each document remains searchable by the existing
-   application until its successful atomic replacement. Repeated runs skip
-   unchanged successful documents; a failed replacement preserves old content.
-5. Verify the complete index with live held-out retrieval and RAG evaluation,
-   inspect failures and manually review generated claims/quotes. Switch to the
-   new API/frontend/MCP only after that validation.
+This project currently runs locally. No production rollout, parallel deployment
+or evaluation gate is needed to start the development servers.
 
-The new retrieval implementation excludes rows with unknown or mismatched
-embedding model/dimensions. Deploying it before rebuilding legacy metadata will
-produce empty search results. Do not populate metadata with guessed model names
-as a shortcut. Changing embedding models or dimensions needs a separate staged
-index/database migration; zero-downtime cross-model index switching is outside
-this patch. A dimension change also requires a vector-column migration.
+1. Run `pnpm install` and keep your root `.env` with the local URLs from
+   `.env.example`. The API, frontend and optional MCP process use that file.
+2. Start Docker Desktop, then run `pnpm run setup`: it starts Docker PostgreSQL, waits for its healthcheck,
+   builds the shared package, applies migrations and seeds demo users. It does
+   not call Gemini, ingest documents or run tests.
+3. Run `pnpm dev` to start the API at localhost:4000 and frontend at
+   localhost:3000. Login and the dashboard do not require a Gemini key.
+4. When ready, replace the outdated `GEMINI_API_KEY` in `.env` and run
+   `pnpm ingest` to rebuild the local corpus. Restart development servers after
+   changing their environment. MCP starts separately with `pnpm dev:mcp`.
+
+Migration `0002_cultured_salo.sql` is additive: it records model/configuration
+metadata and skipped-document counts without deleting documents or embeddings.
+Legacy rows require one rebuild because their embedding configuration is
+unknown. Search excludes unknown or mismatched embedding metadata until that
+rebuild completes. Repeated ingestion skips unchanged successful documents;
+failed replacements preserve the previous index. Do not guess legacy model
+metadata to bypass reindexing.
+
+The local Docker database provides a direct PostgreSQL connection, which also
+supports the ingestion session advisory lock. Changing the embedding model
+requires another ingestion. Changing embedding dimensions additionally requires
+a vector-column migration.
 
 Missing corpus files are **retained**, reported in CLI/admin ingestion results
 and logged. There is no automatic deletion. An operator must review and

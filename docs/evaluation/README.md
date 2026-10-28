@@ -1,5 +1,10 @@
 # Reproducible quality evaluation
 
+Evaluation is optional and separate from local setup. `pnpm run setup` and
+`pnpm dev` do not run these commands or call Gemini. The API failure recorded
+below came from the old local key during the earlier audit; it is historical,
+not a check of your current credentials.
+
 The dataset in `apps/api/src/evaluation/quality-cases.ts` contains 40 cases:
 7 tuning and 33 held-out cases, including technical identifiers, similar dated
 reports, historical/current versions, supersession, two-document questions,
