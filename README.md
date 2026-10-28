@@ -4,7 +4,7 @@ A full-stack Retrieval-Augmented Generation (RAG) application built for
 the Playable Factory AI Software Engineer case study.
 
 The application indexes the provided document corpus, retrieves relevant
-passages using hybrid search, and generates grounded answers with
+passages using dense semantic search, and generates evidence-backed answers with
 citations to source documents. It also includes role-based access
 control, an admin dashboard, an MCP search interface, retrieval
 evaluation, and a live deployment.
@@ -14,42 +14,52 @@ evaluation, and a live deployment.
 -   Repeatable document ingestion with observable ingestion status
 -   Document chunking and Gemini embedding generation
 -   PostgreSQL + pgvector vector storage
--   Hybrid retrieval using vector similarity and PostgreSQL full-text
-    search
--   Weighted Reciprocal Rank Fusion (RRF)
--   Grounded RAG answers with source attribution
--   Out-of-corpus abstention using an evaluated similarity threshold
+-   One dense retrieval path shared by chat, HTTP search and MCP
+-   Experimental lexical + raw RRF hybrid retrieval for evaluation
+-   Structured answers with validated source IDs and exact quotations
+-   Evidence-based abstention and explicit limitations for partial answers
+-   Atomic reindexing, unchanged-document skipping and configuration tracking
 -   Authentication and role-based authorization for `USER` and `ADMIN`
 -   Admin dashboard for documents, ingestion runs, index health, and
     search analytics
 -   Admin-triggered corpus ingestion
 -   MCP search tool for external clients
--   Small retrieval evaluation suite
+-   Forty corpus-verified evaluation cases with separate retrieval/generation metrics
 -   Responsive Next.js + Tailwind CSS interface
 -   Live deployment
 
 ## Retrieval Evaluation
 
-  Metric                           Dense   Hybrid
-  ------------------------------ ------- --------
-  Top-1 source accuracy              90%     100%
-  Top-3 source recall               100%     100%
-  Negative abstention accuracy      100%     100%
+The revised evaluation checks source recall/precision, MRR, supporting passage
+coverage, generated fact coverage, citation validity and abstention errors.
+It separates seven tuning cases from 33 held-out cases. Dense and hybrid use
+the same embedding and index snapshot. Search scores are ranking signals;
+answerability is decided from supporting evidence, without a cosine cutoff.
 
-The evaluation showed clean separation between the tested answerable and
-unanswerable queries. A dense similarity threshold of `0.65` is used to
-reject unsupported questions before generation.
+On the checked-in corpus, the incoming chunker produced 455 chunks and split
+20 paragraphs across chunk boundaries. The revised chunker preserves all 142
+documents and all 643 paragraphs intact, with 142 chunks. These are measured
+fragmentation improvements, not retrieval or answer accuracy claims.
+
+Live evaluation is currently unverified: the configured Gemini key returned
+HTTP 401 before any case completed. Previous README accuracy figures came
+from a much smaller historical suite and are not evidence for this revision.
 
 ``` bash
 pnpm --filter @playable-factory/api test:evaluation
+pnpm --filter @playable-factory/api test:rag:evaluation
 ```
+
+See the [architecture audit](docs/RAG_ARCHITECTURE_AUDIT.md) for findings,
+recorded before/after results and deployment requirements, and the
+[evaluation guide](docs/evaluation/README.md) for metric definitions and commands.
 
 ## Technology Stack
 
 **Frontend:** Next.js, React, TypeScript, Tailwind CSS\
 **Backend:** Node.js, Express, TypeScript, Drizzle ORM\
 **AI & Retrieval:** Google Gemini, PostgreSQL, pgvector, PostgreSQL
-full-text search, cosine similarity, weighted RRF\
+full-text search (experimental), cosine similarity, raw RRF\
 **Infrastructure:** pnpm workspaces, Docker Compose, Neon, Render,
 Vercel, Model Context Protocol (MCP)
 
@@ -117,6 +127,16 @@ pnpm ingest
 
 Ingestion is repeatable and records document/run status so progress and
 failures can be observed from the admin dashboard.
+
+Unchanged successful documents are skipped using content and configuration
+checksums. New embeddings are prepared before atomically replacing each
+document's searchable content. Failed replacements preserve the previous
+index. Missing corpus files are reported and retained for explicit review.
+
+Upgrading an existing installation requires migration
+`0002_cultured_salo.sql` and one successful ingestion before switching to the
+new API: legacy documents have unknown embedding metadata and are excluded
+by the new retrieval implementation. See the audit's staged rollout steps.
 
 ## Running the Application
 
@@ -188,7 +208,9 @@ Authorization: Bearer <token>
 }
 ```
 
-The response contains a grounded answer and retrieved source documents.
+The response contains supported claims and only their cited source passages,
+with stable source IDs and exact quotations. Search results are candidates;
+they are not automatically returned as authoritative answer sources.
 If the corpus does not contain sufficient evidence, the system abstains
 instead of generating an unsupported answer.
 
@@ -248,26 +270,41 @@ the production frontend origin.
 
 ## Design Decisions
 
-### Hybrid Retrieval
+### Retrieval
 
-Dense retrieval captures semantic similarity while PostgreSQL full-text
-search captures lexical signals. The ranked result sets are combined
-using weighted Reciprocal Rank Fusion. On the evaluation set, hybrid
-retrieval improved Top-1 source accuracy from `90%` to `100%` while
-preserving `100%` Top-3 recall.
+Dense semantic retrieval is the default across chat, search and MCP.
+Body-text lexical search with equal-weight RRF remains an evaluation candidate.
+It will require representative held-out evidence before becoming a default.
+Query rewriting and question-specific ranking boosts were removed.
 
 ### Abstention
 
-Dense cosine similarity is used as an answerability signal. The `0.65`
-threshold was selected using the evaluation set rather than chosen
-arbitrarily. Queries without sufficiently relevant corpus evidence are
-rejected before generation.
+The generator must answer exclusively from retrieved evidence, cite every
+claim and identify missing requested details. The server rejects malformed
+claims, unknown source IDs and quotations absent from the cited passages.
+Quote provenance is validated locally; factual correctness and semantic
+entailment still require live evaluation and human review. Similarity and
+RRF scores are never treated as calibrated answer confidence.
 
 ### Chunking
 
 Documents below the configured chunk-size limit remain intact. Larger
-documents are split into manageable chunks before embedding, avoiding
+documents are split at heading, paragraph and line/word boundaries before embedding, avoiding
 unnecessary fragmentation of already-small source documents.
+
+### Validation
+
+```bash
+pnpm --filter @playable-factory/shared build
+pnpm --filter @playable-factory/api test
+pnpm --filter @playable-factory/api lint
+pnpm build
+```
+
+The database transaction integration test is skipped unless TEST_DATABASE_URL
+points at an isolated PostgreSQL database with pgvector installed. The full
+workspace production build passes. Frontend lint still reports two existing
+React effect/state errors in the admin and chat pages; see the audit.
 
 ### Shared Contracts
 

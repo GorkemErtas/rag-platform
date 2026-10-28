@@ -1,5 +1,15 @@
 # AI Usage Log
 
+> The sections below describe the original implementation and historical
+> benchmarks. The 2026-10-28 architecture audit replaced the default hybrid
+> pipeline, cosine answerability cutoff and normalized relevance scores.
+> Those historical scores were not reproduced for the revised implementation.
+> Current behavior, actual checks, limitations and failed live evaluation are
+> recorded in [the audit](docs/RAG_ARCHITECTURE_AUDIT.md) and
+> [evaluation reports](docs/evaluation/README.md). Codex assisted with this audit,
+> refactoring, test implementation and documentation; no live answer-quality
+> improvement is claimed while Gemini credentials return HTTP 401.
+
 AI tools (Claude, Cursor, Copilot) were used heavily as an active pair-programming companion throughout this project. We worked side-by-side to write code, design the RAG pipeline, build components, iterate on complex logic, and debug deployment issues.
 
 ## What AI Did (Co-authored & Generated)
