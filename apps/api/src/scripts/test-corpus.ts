@@ -14,8 +14,15 @@ for (const document of documents) {
   totalChunks += chunks.length;
 
   console.log(
-    `${document.path}: ${chunks.length} chunks`,
+    `\n${document.path}: ${chunks.length} chunks`,
   );
+
+  chunks.forEach((chunk) => {
+    console.log(
+      `\n--- Chunk ${chunk.index} (${chunk.content.length} chars) ---`,
+    );
+    console.log(chunk.content);
+  });
 }
 
 console.log(`Total chunks: ${totalChunks}`);

@@ -11,7 +11,12 @@ export interface SearchResult {
   chunkIndex: number;
   content: string;
   similarity: number;
+  /** Compatibility score: cosine for dense/balanced retrieval, raw RRF for rrf. */
   relevance: number;
+  /** Result order is authoritative; similarity is not answer confidence. */
+  retrievalMethod?: "dense" | "hybrid" | "rrf";
+  denseRank?: number;
+  lexicalRank?: number;
 }
 
 export interface SearchResponse {
@@ -24,6 +29,9 @@ export interface ChatRequest {
 }
 
 export interface ChatSource {
+  /** Stable within the retrieved index snapshot, independent of ranking order. */
+  sourceId?: string;
+  quotes?: string[];
   path: string;
   title: string | null;
   chunkIndex: number;
@@ -35,6 +43,9 @@ export interface ChatResponse {
   answer: string;
   answered: boolean;
   sources: ChatSource[];
+  missingInformation?: string;
+  status?: "answered" | "partial" | "unanswered" | "error";
+  reason?: "insufficient-evidence" | "index-not-ready" | "context-unavailable" | "invalid-generation";
 }
 
 export type UserRole = "USER" | "ADMIN";

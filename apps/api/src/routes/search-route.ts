@@ -17,7 +17,7 @@ searchRouter.post("/", requireSearchAccess, async (req, res) => {
     const limit =
       typeof req.body?.limit === "number"
         ? req.body.limit
-        : 5;
+        : RETRIEVAL_CONFIG.defaultTopK;
 
     if (!query) {
       res.status(400).json({
@@ -26,13 +26,13 @@ searchRouter.post("/", requireSearchAccess, async (req, res) => {
       return;
     }
 
-    const results = (
-      await searchDocuments(query, limit)
-    ).filter(
-      (result) =>
-        result.similarity >=
-        RETRIEVAL_CONFIG.minSimilarity,
-    );
+    if (req.body?.limit !== undefined &&
+        (typeof req.body.limit !== "number" || !Number.isInteger(limit) || limit < 1 || limit > RETRIEVAL_CONFIG.maxSearchLimit)) {
+      res.status(400).json({ error: "Search limit must be an integer between 1 and 20" });
+      return;
+    }
+
+    const results = await searchDocuments(query, limit);
 
     const response: SearchResponse = {
       query,

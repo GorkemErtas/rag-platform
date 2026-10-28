@@ -10,6 +10,8 @@ try {
   console.log("Ingestion finished");
   console.log(`Run ID: ${result.runId}`);
   console.log(`Documents processed: ${result.documentsProcessed}`);
+  console.log(`Documents skipped: ${result.documentsSkipped}`);
+  console.log(`Missing files retained: ${result.missingPaths.length}`);
   console.log(`Documents failed: ${result.documentsFailed}`);
 
   if (result.documentsFailed > 0) {

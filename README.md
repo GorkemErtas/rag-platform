@@ -4,54 +4,68 @@ A full-stack Retrieval-Augmented Generation (RAG) application built for
 the Playable Factory AI Software Engineer case study.
 
 The application indexes the provided document corpus, retrieves relevant
-passages using hybrid search, and generates grounded answers with
+passages using balanced semantic and lexical search, and generates evidence-backed answers with
 citations to source documents. It also includes role-based access
-control, an admin dashboard, an MCP search interface, retrieval
-evaluation, and a live deployment.
+control, an admin dashboard, an MCP search interface and optional retrieval
+evaluation. The current setup runs locally with Docker PostgreSQL, an Express
+API and a Next.js frontend.
 
 ## Features
 
 -   Repeatable document ingestion with observable ingestion status
 -   Document chunking and Gemini embedding generation
 -   PostgreSQL + pgvector vector storage
--   Hybrid retrieval using vector similarity and PostgreSQL full-text
-    search
--   Weighted Reciprocal Rank Fusion (RRF)
--   Grounded RAG answers with source attribution
--   Out-of-corpus abstention using an evaluated similarity threshold
+-   One configured retrieval path shared by chat, HTTP search and MCP
+-   Balanced dense/lexical candidates, with dense and RRF comparison modes
+-   Structured answers citing server-issued paragraph IDs and source quotations
+-   Evidence-based abstention and explicit limitations for partial answers
+-   Atomic reindexing, unchanged-document skipping and configuration tracking
 -   Authentication and role-based authorization for `USER` and `ADMIN`
 -   Admin dashboard for documents, ingestion runs, index health, and
     search analytics
 -   Admin-triggered corpus ingestion
 -   MCP search tool for external clients
--   Small retrieval evaluation suite
+-   Forty corpus-verified evaluation cases with separate retrieval/generation metrics
 -   Responsive Next.js + Tailwind CSS interface
--   Live deployment
+-   Local development with a shared root `.env` file
 
 ## Retrieval Evaluation
 
-  Metric                           Dense   Hybrid
-  ------------------------------ ------- --------
-  Top-1 source accuracy              90%     100%
-  Top-3 source recall               100%     100%
-  Negative abstention accuracy      100%     100%
+The revised evaluation checks source recall/precision, MRR, supporting passage
+coverage, generated fact coverage, citation validity and abstention errors.
+It separates eight tuning cases from 32 held-out cases. Dense and hybrid use
+the same embedding and index snapshot. Search scores are ranking signals;
+answerability is decided from supporting evidence, without a cosine cutoff.
 
-The evaluation showed clean separation between the tested answerable and
-unanswerable queries. A dense similarity threshold of `0.65` is used to
-reject unsupported questions before generation.
+On the checked-in corpus, the incoming chunker produced 455 chunks and split
+20 paragraphs across chunk boundaries. The revised chunker preserves all 142
+documents and all 643 paragraphs intact, with 142 chunks. These are measured
+fragmentation improvements, not retrieval or answer accuracy claims.
+
+The earlier audit's API evaluation used an outdated local Gemini key and stopped
+before any case completed. A later user-generated RAG report completed 33 cases:
+dense and the earlier RRF hybrid each found all required sources at K=5 in
+26/27 answerable cases. `company-pods` missed its source even at K=8. Those are
+results for the previous implementation, not measurements of the new changes.
+See the [report analysis](docs/evaluation/2026-10-28-user-run-analysis.md).
+Evaluation is optional and is not part of `pnpm run setup` or `pnpm dev`.
 
 ``` bash
 pnpm --filter @playable-factory/api test:evaluation
+pnpm --filter @playable-factory/api test:rag:evaluation
 ```
+
+See the [architecture audit](docs/RAG_ARCHITECTURE_AUDIT.md) for findings,
+recorded before/after results and local reindexing requirements, and the
+[evaluation guide](docs/evaluation/README.md) for metric definitions and commands.
 
 ## Technology Stack
 
 **Frontend:** Next.js, React, TypeScript, Tailwind CSS\
 **Backend:** Node.js, Express, TypeScript, Drizzle ORM\
 **AI & Retrieval:** Google Gemini, PostgreSQL, pgvector, PostgreSQL
-full-text search, cosine similarity, weighted RRF\
-**Infrastructure:** pnpm workspaces, Docker Compose, Neon, Render,
-Vercel, Model Context Protocol (MCP)
+full-text search, cosine similarity, balanced candidate selection, raw RRF\
+**Local infrastructure:** pnpm workspaces, Docker Compose, Model Context Protocol (MCP)
 
 ## Project Structure
 
@@ -67,10 +81,10 @@ packages/
 
 ## Prerequisites
 
--   Node.js
+-   Node.js 22.12 or later
 -   pnpm
 -   Docker / Docker Compose
--   Google Gemini API key
+-   Google Gemini API key for ingestion, search and chat
 
 ## Installation
 
@@ -84,18 +98,20 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Create `.env` from the included `.env.example` and provide the required
-values.
+For a new checkout, create the root `.env` from `.env.example`. Keep your
+existing `.env` when updating this checkout. Set `JWT_SECRET` to a long random
+value for login, and `MCP_SERVICE_TOKEN` if you will use MCP. The default
+database and service URLs already target your machine.
 
-``` bash
-cp .env.example .env
+``` powershell
+Copy-Item .env.example .env
 ```
 
 Set the required secrets:
 
 - `GEMINI_API_KEY`: Google Gemini API key.
 - `JWT_SECRET`: Any sufficiently long random string used to sign local JWTs.
-- `MCP_SERVICE_TOKEN`: Any sufficiently long random string for local API/MCP authentication. When connecting the local MCP server to the deployed API, use the service token provided via email (MCP_SERVER_ACCESS.txt).
+- `MCP_SERVICE_TOKEN`: Any sufficiently long random string for local API/MCP authentication.
 
 For local development, `JWT_SECRET` and `MCP_SERVICE_TOKEN` can be generated with:
 
@@ -103,25 +119,35 @@ For local development, `JWT_SECRET` and `MCP_SERVICE_TOKEN` can be generated wit
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### 3. Start PostgreSQL
+Only ingestion, search and chat need a current `GEMINI_API_KEY`. Local database
+setup, demo user creation and server startup do not call Gemini. Next.js reads
+`NEXT_PUBLIC_API_URL` from the same root `.env`; restart `pnpm dev` after changing
+environment values.
+
+### 3. Prepare the local database and demo users
+
+Start Docker Desktop first, then run the project setup script:
 
 ``` bash
-docker compose up -d
+pnpm run setup
 ```
 
-Docker Compose provides the local PostgreSQL environment with pgvector
-support.
+This starts Docker PostgreSQL, waits for its healthcheck, builds the shared
+TypeScript package, applies migrations and seeds the demo users. It does not
+ingest documents, call Gemini or run tests. Existing PostgreSQL data is kept
+in the `postgres_data` Docker volume.
 
-### 4. Run migrations and seed demo users
+The database is available at `localhost:5433/playable_factory` with the local
+Docker credentials in `.env.example`. To manage it separately:
 
 ``` bash
-pnpm db:migrate
-pnpm db:seed
+pnpm db:up
+pnpm db:stop
 ```
 
-### 5. Index the corpus
+### 4. Index the corpus when your Gemini key is ready
 
-Point the configured corpus path at the provided dataset, then run:
+Update `GEMINI_API_KEY` in your root `.env`, then run:
 
 ``` bash
 pnpm ingest
@@ -130,37 +156,42 @@ pnpm ingest
 Ingestion is repeatable and records document/run status so progress and
 failures can be observed from the admin dashboard.
 
+Unchanged successful documents are skipped using content and configuration
+checksums. New embeddings are prepared before atomically replacing each
+document's searchable content. Failed replacements preserve the previous
+index. Missing corpus files are reported and retained for explicit review.
+
+For an existing local database, `pnpm run setup` applies migration
+`0002_cultured_salo.sql`. Run `pnpm ingest` once after updating the key to rebuild
+legacy embedding metadata. Until then, login and the dashboard are available,
+but legacy chunks with unknown embedding metadata are excluded from search.
+
 ## Running the Application
 
-Start the API from the repository root:
+Start the API and frontend together from the repository root:
+
+```bash
+pnpm dev
+```
+
+Local addresses:
+
+- Frontend: http://localhost:3000
+- API: http://localhost:4000
+- API health: http://localhost:4000/health
+
+To run each server in its own terminal instead:
 
 ```bash
 pnpm dev:api
-```
-
-In a second terminal, start the frontend:
-
-```bash
 pnpm dev:web
 ```
-
-The API and frontend development URLs are printed in their respective terminals.
 
 To run the MCP server separately:
 
 ```bash
 pnpm dev:mcp
 ```
-
-To test the MCP server with MCP Inspector, open a new terminal and run:
-
-```bash
-npx @modelcontextprotocol/inspector
-```
-
-and then follow the path:
-
-connect -> list tools -> search_documents
 
 ## Demo Credentials
 
@@ -210,7 +241,9 @@ Authorization: Bearer <token>
 }
 ```
 
-The response contains a grounded answer and retrieved source documents.
+The response contains supported claims and only their cited source passages,
+with stable source IDs and exact quotations. Search results are candidates;
+they are not automatically returned as authoritative answer sources.
 If the corpus does not contain sufficient evidence, the system abstains
 instead of generating an unsupported answer.
 
@@ -219,12 +252,16 @@ instead of generating an unsupported answer.
 The retrieval capability is also exposed through an MCP server for
 external MCP-compatible clients.
 
-For the deployed API, configure the local MCP process with:
+Configure MCP to call the local API using the root `.env`:
 
 ``` env
-MCP_API_BASE_URL=https://playable-factory-rag-case.onrender.com
-MCP_SERVICE_TOKEN=<provided-service-token>
+MCP_API_BASE_URL=http://127.0.0.1:4000
+MCP_SERVICE_TOKEN=<your-local-service-token>
 ```
+
+If you choose to connect MCP to a separately deployed API, use that API's
+service token provided via email (`MCP_SERVER_ACCESS.txt`) instead of the local
+token, and set `MCP_API_BASE_URL` to its address.
 
 Start the MCP server:
 
@@ -238,58 +275,81 @@ To test the MCP server with MCP Inspector, open a second terminal and run:
 npx @modelcontextprotocol/inspector
 ```
 
-The MCP server runs locally over stdio and calls the deployed search API
-over HTTPS. It can be tested with an MCP-compatible client such as MCP
-Inspector. The service token authenticates MCP-to-API requests.
+Then follow: connect -> list tools -> search_documents.
 
-## Deployment
+The MCP server runs locally over stdio and calls the local search API. The
+service token authenticates MCP-to-API requests. MCP is optional and starts
+separately from `pnpm dev`.
+
+## Local Architecture
 
 ``` text
 Browser
    |
    v
-Vercel (Next.js)
+localhost:3000 (Next.js)
    |
    v
-Render (Express API)
+localhost:4000 (Express API)
    |
    v
-Neon (PostgreSQL + pgvector)
+localhost:5433 (Docker PostgreSQL + pgvector)
 ```
 
-**Live frontend:**\
-https://playable-factory-rag-case-web.vercel.app
-
-**API health:**\
-https://playable-factory-rag-case.onrender.com/health
-
-Production secrets and connection strings are stored as environment
-variables on the relevant hosting platforms. The frontend is configured
-with the deployed API base URL, and the API CORS configuration allows
-the production frontend origin.
+The root `.env` configures the API, frontend and MCP. CORS allows the local
+frontend origin. Docker exposes PostgreSQL only on the local loopback address;
+`pnpm db:stop` stops it without deleting the indexed corpus or user accounts.
 
 ## Design Decisions
 
-### Hybrid Retrieval
+### Retrieval
 
-Dense retrieval captures semantic similarity while PostgreSQL full-text
-search captures lexical signals. The ranked result sets are combined
-using weighted Reciprocal Rank Fusion. On the evaluation set, hybrid
-retrieval improved Top-1 source accuracy from `90%` to `100%` while
-preserving `100%` Top-3 recall.
+`RETRIEVAL_MODE=hybrid` is the default across chat, search and MCP. It alternates
+dense and lexical candidates, emitting each chunk once. This gives lexical-only
+evidence a place alongside dense hits rather than letting similar reports
+occupy the entire context. Lexical search accepts any normalized query term,
+ranks term coverage first, then length-normalized PostgreSQL text relevance.
+It does not require every word in a natural question to appear in one document.
+
+`RETRIEVAL_MODE=dense` retains the semantic baseline. `rrf` exposes equal-weight
+RRF over the corrected candidate lists. No query rewriting, question-specific
+ranking rules, generated summaries or additional model calls were added.
+Balanced retrieval is a targeted correction for the observed failure; its
+overall before/after quality has not been measured in this change.
 
 ### Abstention
 
-Dense cosine similarity is used as an answerability signal. The `0.65`
-threshold was selected using the evaluation set rather than chosen
-arbitrarily. Queries without sufficiently relevant corpus evidence are
-rejected before generation.
+The generator must answer exclusively from retrieved evidence, cite every
+claim using a supplied paragraph ID and identify missing requested details.
+The server resolves those IDs to the original paragraph text; it does not ask
+the model to reproduce quotations. Unknown IDs and malformed output produce a
+verification error, not an assertion that the knowledge base lacks an answer.
+Partial answers are explicitly labeled. Quote provenance is guaranteed by
+source lookup; factual correctness and semantic
+entailment still require live evaluation and human review. Similarity and
+ranking scores are never treated as calibrated answer confidence.
 
 ### Chunking
 
 Documents below the configured chunk-size limit remain intact. Larger
-documents are split into manageable chunks before embedding, avoiding
+documents are split at heading, paragraph and line/word boundaries before embedding, avoiding
 unnecessary fragmentation of already-small source documents.
+
+### Optional Validation
+
+These commands are separate from local startup and only run when requested:
+
+```bash
+pnpm --filter @playable-factory/shared build
+pnpm --filter @playable-factory/api test
+pnpm --filter @playable-factory/api lint
+pnpm build
+```
+
+The database transaction integration test is skipped unless TEST_DATABASE_URL
+points at an isolated PostgreSQL database with pgvector installed. The full
+workspace production build passes. Frontend lint still reports two existing
+React effect/state errors in the admin and chat pages; see the audit.
 
 ### Shared Contracts
 

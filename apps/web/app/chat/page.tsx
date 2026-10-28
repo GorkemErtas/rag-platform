@@ -169,7 +169,7 @@ export default function ChatPage() {
 
               <div className="mt-4 flex items-center justify-between gap-4">
                 <p className="hidden text-xs text-text-muted sm:block">
-                  Retrieved sources are shown with every grounded answer.
+                  Cited evidence is shown with every supported answer.
                 </p>
 
                 <button
@@ -237,7 +237,7 @@ export default function ChatPage() {
               <Step
                 number="1"
                 title="Hybrid retrieval"
-                description="Semantic similarity and lexical matching are combined to retrieve the most relevant corpus passages."
+                description="Semantic search retrieves corpus passages while preserving document context."
               />
 
               <Step
@@ -249,7 +249,7 @@ export default function ChatPage() {
               <Step
                 number="3"
                 title="Source attribution"
-                description="Relevant source documents and combined relevance scores are returned with the answer."
+                description="Answers cite supporting passages with quotations from the indexed documents."
               />
             </div>
           </div>
@@ -298,7 +298,9 @@ function AnswerPanel({
         </div>
 
         <h2 className="text-base font-semibold text-text-primary">
-          Not enough information
+          {result.reason === "index-not-ready" ? "Knowledge base not ready"
+            : result.status === "error" ? "Answer could not be verified"
+            : "Not enough information"}
         </h2>
 
         <p className="mt-2 max-w-md text-sm leading-6 text-text-secondary">
@@ -311,9 +313,9 @@ function AnswerPanel({
   return (
     <div>
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-xs font-medium text-success">
-          <span className="h-1.5 w-1.5 rounded-full bg-success" />
-          Grounded answer
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${result.missingInformation ? "bg-amber-50 text-amber-800" : "bg-success-soft text-success"}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${result.missingInformation ? "bg-amber-500" : "bg-success"}`} />
+          {result.missingInformation ? "Partial answer" : "Supported answer"}
         </span>
       </div>
 
@@ -325,11 +327,11 @@ function AnswerPanel({
         <div className="mt-8 border-t border-border pt-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-text-primary">
-              Retrieved sources
+              Cited sources
             </h2>
 
             <span className="text-xs text-text-muted">
-              {result.sources.length} sources
+              {result.sources.length} source{result.sources.length === 1 ? "" : "s"}
             </span>
           </div>
 
@@ -341,19 +343,25 @@ function AnswerPanel({
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-text-primary">
+                    {source.sourceId ? `[Source ${source.sourceId}] ` : ""}
                     {source.title ?? source.path}
                   </p>
 
                   <p className="mt-1 truncate text-xs text-text-secondary">
                     {source.path}
                   </p>
+                  {source.quotes?.map((quote, quoteIndex) => (
+                    <blockquote key={quoteIndex} className="mt-2 border-l-2 border-border pl-3 text-xs leading-5 text-text-secondary">
+                      {quote}
+                    </blockquote>
+                  ))}
                 </div>
 
                 <span
-                  title={`Dense similarity: ${source.similarity.toFixed(3)}`}
+                  title="Cosine similarity is a retrieval ranking signal, not answer confidence."
                   className="shrink-0 rounded-lg bg-white px-2 py-1 font-mono text-[11px] text-text-secondary shadow-sm"
                 >
-                  {source.relevance.toFixed(3)}
+                  Cosine {source.similarity.toFixed(3)}
                 </span>
               </div>
             ))}

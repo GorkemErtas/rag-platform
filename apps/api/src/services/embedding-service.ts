@@ -3,27 +3,26 @@ import { env } from "../config/env.js";
 import { EMBEDDING_CONFIG } from "../config/constants.js";
 import { sleep } from "../utils/async.js";
 
-if (!env.geminiApiKey) {
-  throw new Error("GEMINI_API_KEY is not defined");
-}
-
-const ai = new GoogleGenAI({
-  apiKey: env.geminiApiKey,
-});
+let ai: GoogleGenAI | undefined;
 
 type EmbeddingType = "document" | "query";
 
 interface GenerateEmbeddingOptions {
   type: EmbeddingType;
   title?: string;
+  /** Evaluation instrumentation; includes retries, never changes ranking. */
+  onRequest?: () => void;
 }
 
-function normalizeEmbedding(values: number[]): number[] {
+export function normalizeEmbedding(values: number[]): number[] {
+  if (values.length === 0 || values.some((value) => !Number.isFinite(value))) {
+    throw new Error("Embedding must contain finite numeric values");
+  }
   const magnitude = Math.sqrt(
     values.reduce((sum, value) => sum + value * value, 0),
   );
 
-  if (magnitude === 0) {
+  if (!Number.isFinite(magnitude) || magnitude === 0) {
     throw new Error("Cannot normalize a zero embedding");
   }
 
@@ -79,8 +78,11 @@ async function requestEmbedding(
   text: string,
   options: GenerateEmbeddingOptions,
 ) {
+  if (!env.geminiApiKey) throw new Error("GEMINI_API_KEY is not defined");
+  ai ??= new GoogleGenAI({ apiKey: env.geminiApiKey });
   for (let attempt = 0; attempt <= EMBEDDING_CONFIG.maxRetries; attempt += 1) {
     try {
+      options.onRequest?.();
       return await ai.models.embedContent({
         model: env.geminiEmbeddingModel,
         contents: text,

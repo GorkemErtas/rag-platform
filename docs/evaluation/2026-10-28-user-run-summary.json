@@ -1,0 +1,104 @@
+{
+  "source": "apps/api/quality-report.json",
+  "sourceSha256": "a160ca20b6d738f5e722c6eb8731a2a8b97c0bdcf743767353e7cd36d257a982",
+  "provenance": "Existing user-generated report; captured without running tests or model calls",
+  "createdAt": "2026-10-28T11:23:22.673Z",
+  "state": "complete",
+  "mode": "rag",
+  "split": "held-out",
+  "cases": 33,
+  "schemaVersion": 1,
+  "corpusHash": "006e511032561a03de1533d007c5ad64bbf7fbad43927d0173899e675c85482e",
+  "datasetHash": "7441d0d543502e07c935422c8ceb6205a00c7c9540cfae578f91668392425739",
+  "embeddingModel": "gemini-embedding-001",
+  "chatModel": "gemini-3.6-flash",
+  "context": {
+    "maxContextChunks": 8,
+    "maxContextCharacters": 12000
+  },
+  "summaries": {
+    "dense": {
+      "retrievalAt5": {
+        "cases": 27,
+        "recall": 0.9629629629629629,
+        "precision": 0.22962962962962974,
+        "mrr": 0.8703703703703703,
+        "supportingPassageRecall": 0.9629629629629629,
+        "allSourcesFound": 26
+      },
+      "generation": {
+        "cases": 33,
+        "answerabilityAccuracy": 0.9696969696969697,
+        "expectedFactCoverageProxy": 0.9629629629629629,
+        "citationValidity": 1,
+        "quoteProvenance": 1,
+        "abstentionPrecision": 0.8571428571428571,
+        "abstentionRecall": 1,
+        "falsePositiveAbstentions": 1,
+        "falseNegativeAbstentions": 0,
+        "factualCorrectness": null,
+        "semanticFaithfulness": null
+      }
+    },
+    "hybrid": {
+      "retrievalAt5": {
+        "cases": 27,
+        "recall": 0.9629629629629629,
+        "precision": 0.22962962962962974,
+        "mrr": 0.8703703703703703,
+        "supportingPassageRecall": 0.9629629629629629,
+        "allSourcesFound": 26
+      },
+      "generation": {
+        "cases": 33,
+        "answerabilityAccuracy": 0.9696969696969697,
+        "expectedFactCoverageProxy": 0.9506172839506173,
+        "citationValidity": 1,
+        "quoteProvenance": 1,
+        "abstentionPrecision": 0.8571428571428571,
+        "abstentionRecall": 1,
+        "falsePositiveAbstentions": 1,
+        "falseNegativeAbstentions": 0,
+        "factualCorrectness": null,
+        "semanticFaithfulness": null
+      }
+    }
+  },
+  "companyPods": [
+    {
+      "strategy": "dense",
+      "sourceRecallAt5": 0,
+      "sourceRecallAt8": 0,
+      "paths": [
+        "meeting-notes/2026-03-23-production-sync.md",
+        "meeting-notes/2025-03-03-production-sync.md",
+        "meeting-notes/2025-05-05-production-sync.md",
+        "meeting-notes/2025-04-21-production-sync.md",
+        "meeting-notes/2026-06-15-production-sync.md",
+        "meeting-notes/2026-02-23-production-sync.md",
+        "meeting-notes/2025-10-06-production-sync.md",
+        "meeting-notes/2025-09-08-production-sync.md"
+      ],
+      "answered": false,
+      "validation": "invalid-grounding"
+    },
+    {
+      "strategy": "hybrid",
+      "sourceRecallAt5": 0,
+      "sourceRecallAt8": 0,
+      "paths": [
+        "meeting-notes/2026-03-23-production-sync.md",
+        "meeting-notes/2025-03-03-production-sync.md",
+        "meeting-notes/2025-05-05-production-sync.md",
+        "meeting-notes/2025-04-21-production-sync.md",
+        "meeting-notes/2026-06-15-production-sync.md",
+        "meeting-notes/2026-02-23-production-sync.md",
+        "meeting-notes/2025-10-06-production-sync.md",
+        "meeting-notes/2025-09-08-production-sync.md"
+      ],
+      "answered": false,
+      "validation": "invalid-grounding"
+    }
+  ],
+  "changedImplementationEvaluated": false
+}

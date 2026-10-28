@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { RETRIEVAL_CONFIG, type RetrievalMode } from "./constants.js";
 
 const currentFile = fileURLToPath(import.meta.url);
 const currentDir = path.dirname(currentFile);
@@ -11,8 +12,14 @@ config({
   path: path.join(rootDir, ".env"),
 });
 
+const retrievalMode = process.env.RETRIEVAL_MODE ?? RETRIEVAL_CONFIG.defaultMode;
+if (!["dense", "hybrid", "rrf"].includes(retrievalMode)) {
+  throw new Error("RETRIEVAL_MODE must be dense, hybrid or rrf");
+}
+
 export const env = {
   databaseUrl: process.env.DATABASE_URL,
+  retrievalMode: retrievalMode as RetrievalMode,
   port: Number(process.env.PORT ?? 4000),
 
   geminiApiKey: process.env.GEMINI_API_KEY,

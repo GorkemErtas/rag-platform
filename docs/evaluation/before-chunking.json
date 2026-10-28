@@ -1,0 +1,1148 @@
+{
+  "corpusHash": "006e511032561a03de1533d007c5ad64bbf7fbad43927d0173899e675c85482e",
+  "documents": 142,
+  "chunks": 455,
+  "fragmentedDocuments": 134,
+  "sourceCharacters": 113166,
+  "indexedCharacters": 136664,
+  "paragraphs": 643,
+  "intactParagraphs": 623,
+  "rows": [
+    {
+      "path": "analytics-events.md",
+      "characters": 726,
+      "chunks": 4,
+      "indexedCharacters": 802,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "build-pipeline.md",
+      "characters": 784,
+      "chunks": 3,
+      "indexedCharacters": 944,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "changelogs/lumen-build-3.8.md",
+      "characters": 190,
+      "chunks": 1,
+      "indexedCharacters": 186,
+      "paragraphs": 2,
+      "intactParagraphs": 1
+    },
+    {
+      "path": "changelogs/lumen-build-3.9.md",
+      "characters": 177,
+      "chunks": 1,
+      "indexedCharacters": 173,
+      "paragraphs": 2,
+      "intactParagraphs": 1
+    },
+    {
+      "path": "changelogs/lumen-build-4.0.md",
+      "characters": 110,
+      "chunks": 1,
+      "indexedCharacters": 106,
+      "paragraphs": 2,
+      "intactParagraphs": 1
+    },
+    {
+      "path": "changelogs/lumen-build-4.1.md",
+      "characters": 187,
+      "chunks": 1,
+      "indexedCharacters": 183,
+      "paragraphs": 2,
+      "intactParagraphs": 1
+    },
+    {
+      "path": "changelogs/lumen-build-4.2.md",
+      "characters": 351,
+      "chunks": 1,
+      "indexedCharacters": 347,
+      "paragraphs": 2,
+      "intactParagraphs": 1
+    },
+    {
+      "path": "changelogs/lumen-build-4.3.md",
+      "characters": 180,
+      "chunks": 1,
+      "indexedCharacters": 176,
+      "paragraphs": 2,
+      "intactParagraphs": 1
+    },
+    {
+      "path": "client-briefs/bubble-bakery.md",
+      "characters": 476,
+      "chunks": 2,
+      "indexedCharacters": 555,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "client-briefs/cinder-keep.md",
+      "characters": 475,
+      "chunks": 2,
+      "indexedCharacters": 555,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "client-briefs/gloom-garden.md",
+      "characters": 464,
+      "chunks": 2,
+      "indexedCharacters": 544,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "client-briefs/merge-marina.md",
+      "characters": 467,
+      "chunks": 2,
+      "indexedCharacters": 547,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "client-briefs/orbit-golf.md",
+      "characters": 474,
+      "chunks": 2,
+      "indexedCharacters": 554,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "client-briefs/puzzle-pier.md",
+      "characters": 471,
+      "chunks": 2,
+      "indexedCharacters": 550,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "client-briefs/rooftop-dash.md",
+      "characters": 464,
+      "chunks": 2,
+      "indexedCharacters": 544,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "client-briefs/sky-ferry.md",
+      "characters": 466,
+      "chunks": 2,
+      "indexedCharacters": 546,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "client-briefs/tidal-tycoon.md",
+      "characters": 481,
+      "chunks": 2,
+      "indexedCharacters": 560,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "client-briefs/waffle-rush.md",
+      "characters": 444,
+      "chunks": 2,
+      "indexedCharacters": 524,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "company-overview.md",
+      "characters": 733,
+      "chunks": 3,
+      "indexedCharacters": 892,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "delivery-reports/2025-05-bubble-bakery.md",
+      "characters": 982,
+      "chunks": 4,
+      "indexedCharacters": 1222,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-05-cinder-keep.md",
+      "characters": 918,
+      "chunks": 4,
+      "indexedCharacters": 1157,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-05-merge-marina.md",
+      "characters": 1026,
+      "chunks": 4,
+      "indexedCharacters": 1266,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-05-puzzle-pier.md",
+      "characters": 971,
+      "chunks": 4,
+      "indexedCharacters": 1211,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-05-tidal-tycoon.md",
+      "characters": 954,
+      "chunks": 4,
+      "indexedCharacters": 1194,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-05-waffle-rush.md",
+      "characters": 981,
+      "chunks": 4,
+      "indexedCharacters": 1221,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-06-gloom-garden.md",
+      "characters": 1002,
+      "chunks": 4,
+      "indexedCharacters": 1242,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-06-orbit-golf.md",
+      "characters": 984,
+      "chunks": 4,
+      "indexedCharacters": 1223,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-06-rooftop-dash.md",
+      "characters": 990,
+      "chunks": 4,
+      "indexedCharacters": 1230,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-06-sky-ferry.md",
+      "characters": 992,
+      "chunks": 4,
+      "indexedCharacters": 1232,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-06-tidal-tycoon.md",
+      "characters": 986,
+      "chunks": 4,
+      "indexedCharacters": 1226,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-06-waffle-rush.md",
+      "characters": 970,
+      "chunks": 4,
+      "indexedCharacters": 1210,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-07-bubble-bakery.md",
+      "characters": 943,
+      "chunks": 4,
+      "indexedCharacters": 1182,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-07-gloom-garden.md",
+      "characters": 962,
+      "chunks": 4,
+      "indexedCharacters": 1202,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-07-orbit-golf.md",
+      "characters": 982,
+      "chunks": 4,
+      "indexedCharacters": 1222,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-07-rooftop-dash.md",
+      "characters": 967,
+      "chunks": 4,
+      "indexedCharacters": 1206,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-07-sky-ferry.md",
+      "characters": 984,
+      "chunks": 4,
+      "indexedCharacters": 1224,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-07-tidal-tycoon.md",
+      "characters": 982,
+      "chunks": 4,
+      "indexedCharacters": 1222,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-09-bubble-bakery.md",
+      "characters": 986,
+      "chunks": 4,
+      "indexedCharacters": 1225,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-09-merge-marina.md",
+      "characters": 989,
+      "chunks": 4,
+      "indexedCharacters": 1229,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-09-orbit-golf.md",
+      "characters": 992,
+      "chunks": 4,
+      "indexedCharacters": 1231,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-09-puzzle-pier.md",
+      "characters": 919,
+      "chunks": 4,
+      "indexedCharacters": 1159,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-09-sky-ferry.md",
+      "characters": 975,
+      "chunks": 4,
+      "indexedCharacters": 1213,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-09-tidal-tycoon.md",
+      "characters": 986,
+      "chunks": 4,
+      "indexedCharacters": 1225,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-10-bubble-bakery.md",
+      "characters": 1010,
+      "chunks": 4,
+      "indexedCharacters": 1250,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-10-cinder-keep.md",
+      "characters": 943,
+      "chunks": 4,
+      "indexedCharacters": 1181,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-10-merge-marina.md",
+      "characters": 992,
+      "chunks": 4,
+      "indexedCharacters": 1232,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-10-puzzle-pier.md",
+      "characters": 970,
+      "chunks": 4,
+      "indexedCharacters": 1209,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-10-rooftop-dash.md",
+      "characters": 988,
+      "chunks": 4,
+      "indexedCharacters": 1228,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-10-waffle-rush.md",
+      "characters": 983,
+      "chunks": 4,
+      "indexedCharacters": 1223,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-11-cinder-keep.md",
+      "characters": 957,
+      "chunks": 4,
+      "indexedCharacters": 1197,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-11-gloom-garden.md",
+      "characters": 924,
+      "chunks": 4,
+      "indexedCharacters": 1164,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-11-merge-marina.md",
+      "characters": 956,
+      "chunks": 4,
+      "indexedCharacters": 1196,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-11-orbit-golf.md",
+      "characters": 982,
+      "chunks": 4,
+      "indexedCharacters": 1222,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-11-tidal-tycoon.md",
+      "characters": 962,
+      "chunks": 4,
+      "indexedCharacters": 1201,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-11-waffle-rush.md",
+      "characters": 968,
+      "chunks": 4,
+      "indexedCharacters": 1208,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-12-bubble-bakery.md",
+      "characters": 1001,
+      "chunks": 4,
+      "indexedCharacters": 1240,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-12-gloom-garden.md",
+      "characters": 923,
+      "chunks": 4,
+      "indexedCharacters": 1163,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-12-merge-marina.md",
+      "characters": 996,
+      "chunks": 4,
+      "indexedCharacters": 1236,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-12-rooftop-dash.md",
+      "characters": 926,
+      "chunks": 4,
+      "indexedCharacters": 1166,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-12-sky-ferry.md",
+      "characters": 936,
+      "chunks": 4,
+      "indexedCharacters": 1174,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2025-12-waffle-rush.md",
+      "characters": 977,
+      "chunks": 4,
+      "indexedCharacters": 1217,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-01-merge-marina.md",
+      "characters": 930,
+      "chunks": 4,
+      "indexedCharacters": 1170,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-01-puzzle-pier.md",
+      "characters": 987,
+      "chunks": 5,
+      "indexedCharacters": 1142,
+      "paragraphs": 5,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "delivery-reports/2026-01-rooftop-dash.md",
+      "characters": 981,
+      "chunks": 4,
+      "indexedCharacters": 1220,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-01-sky-ferry.md",
+      "characters": 964,
+      "chunks": 4,
+      "indexedCharacters": 1204,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-01-tidal-tycoon.md",
+      "characters": 953,
+      "chunks": 4,
+      "indexedCharacters": 1193,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-01-waffle-rush.md",
+      "characters": 994,
+      "chunks": 4,
+      "indexedCharacters": 1234,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-02-bubble-bakery.md",
+      "characters": 982,
+      "chunks": 4,
+      "indexedCharacters": 1222,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-02-cinder-keep.md",
+      "characters": 987,
+      "chunks": 4,
+      "indexedCharacters": 1225,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-02-merge-marina.md",
+      "characters": 957,
+      "chunks": 4,
+      "indexedCharacters": 1197,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-02-orbit-golf.md",
+      "characters": 998,
+      "chunks": 4,
+      "indexedCharacters": 1238,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-02-sky-ferry.md",
+      "characters": 941,
+      "chunks": 4,
+      "indexedCharacters": 1180,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-02-tidal-tycoon.md",
+      "characters": 923,
+      "chunks": 4,
+      "indexedCharacters": 1163,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-03-bubble-bakery.md",
+      "characters": 964,
+      "chunks": 4,
+      "indexedCharacters": 1204,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-03-cinder-keep.md",
+      "characters": 923,
+      "chunks": 4,
+      "indexedCharacters": 1161,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-03-rooftop-dash.md",
+      "characters": 958,
+      "chunks": 5,
+      "indexedCharacters": 1113,
+      "paragraphs": 5,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "delivery-reports/2026-03-sky-ferry.md",
+      "characters": 984,
+      "chunks": 4,
+      "indexedCharacters": 1223,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-03-tidal-tycoon.md",
+      "characters": 982,
+      "chunks": 4,
+      "indexedCharacters": 1220,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-03-waffle-rush.md",
+      "characters": 980,
+      "chunks": 4,
+      "indexedCharacters": 1220,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-04-bubble-bakery.md",
+      "characters": 980,
+      "chunks": 4,
+      "indexedCharacters": 1220,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-04-cinder-keep.md",
+      "characters": 988,
+      "chunks": 4,
+      "indexedCharacters": 1228,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-04-gloom-garden.md",
+      "characters": 971,
+      "chunks": 4,
+      "indexedCharacters": 1211,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-04-sky-ferry.md",
+      "characters": 1003,
+      "chunks": 4,
+      "indexedCharacters": 1243,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-04-tidal-tycoon.md",
+      "characters": 992,
+      "chunks": 4,
+      "indexedCharacters": 1232,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-04-waffle-rush.md",
+      "characters": 968,
+      "chunks": 4,
+      "indexedCharacters": 1208,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-05-bubble-bakery.md",
+      "characters": 982,
+      "chunks": 4,
+      "indexedCharacters": 1222,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-05-gloom-garden.md",
+      "characters": 981,
+      "chunks": 4,
+      "indexedCharacters": 1221,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-05-merge-marina.md",
+      "characters": 991,
+      "chunks": 4,
+      "indexedCharacters": 1231,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-05-puzzle-pier.md",
+      "characters": 992,
+      "chunks": 4,
+      "indexedCharacters": 1232,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-05-rooftop-dash.md",
+      "characters": 992,
+      "chunks": 4,
+      "indexedCharacters": 1232,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-05-tidal-tycoon.md",
+      "characters": 943,
+      "chunks": 4,
+      "indexedCharacters": 1183,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-06-cinder-keep.md",
+      "characters": 986,
+      "chunks": 4,
+      "indexedCharacters": 1223,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-06-gloom-garden.md",
+      "characters": 1004,
+      "chunks": 4,
+      "indexedCharacters": 1244,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-06-merge-marina.md",
+      "characters": 968,
+      "chunks": 4,
+      "indexedCharacters": 1208,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-06-sky-ferry.md",
+      "characters": 928,
+      "chunks": 4,
+      "indexedCharacters": 1168,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-06-tidal-tycoon.md",
+      "characters": 982,
+      "chunks": 4,
+      "indexedCharacters": 1222,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "delivery-reports/2026-06-waffle-rush.md",
+      "characters": 997,
+      "chunks": 4,
+      "indexedCharacters": 1237,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "guides/asset-naming.md",
+      "characters": 438,
+      "chunks": 3,
+      "indexedCharacters": 515,
+      "paragraphs": 2,
+      "intactParagraphs": 1
+    },
+    {
+      "path": "guides/incident-process.md",
+      "characters": 387,
+      "chunks": 1,
+      "indexedCharacters": 387,
+      "paragraphs": 2,
+      "intactParagraphs": 2
+    },
+    {
+      "path": "guides/review-process.md",
+      "characters": 368,
+      "chunks": 1,
+      "indexedCharacters": 368,
+      "paragraphs": 2,
+      "intactParagraphs": 2
+    },
+    {
+      "path": "incident-postmortem-2026-03.md",
+      "characters": 809,
+      "chunks": 3,
+      "indexedCharacters": 969,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "localization-guide.md",
+      "characters": 590,
+      "chunks": 2,
+      "indexedCharacters": 669,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-03-03-production-sync.md",
+      "characters": 594,
+      "chunks": 2,
+      "indexedCharacters": 674,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-03-17-production-sync.md",
+      "characters": 588,
+      "chunks": 2,
+      "indexedCharacters": 668,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-04-07-production-sync.md",
+      "characters": 608,
+      "chunks": 2,
+      "indexedCharacters": 688,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-04-21-production-sync.md",
+      "characters": 603,
+      "chunks": 2,
+      "indexedCharacters": 683,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-05-05-production-sync.md",
+      "characters": 574,
+      "chunks": 2,
+      "indexedCharacters": 654,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-05-19-production-sync.md",
+      "characters": 612,
+      "chunks": 2,
+      "indexedCharacters": 692,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-06-02-production-sync.md",
+      "characters": 632,
+      "chunks": 2,
+      "indexedCharacters": 712,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-06-16-production-sync.md",
+      "characters": 604,
+      "chunks": 2,
+      "indexedCharacters": 684,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-07-07-production-sync.md",
+      "characters": 619,
+      "chunks": 2,
+      "indexedCharacters": 698,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-07-21-production-sync.md",
+      "characters": 619,
+      "chunks": 2,
+      "indexedCharacters": 699,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-09-08-production-sync.md",
+      "characters": 592,
+      "chunks": 2,
+      "indexedCharacters": 672,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-09-22-production-sync.md",
+      "characters": 577,
+      "chunks": 2,
+      "indexedCharacters": 657,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2025-10-06-production-sync.md",
+      "characters": 706,
+      "chunks": 3,
+      "indexedCharacters": 784,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "meeting-notes/2025-10-20-production-sync.md",
+      "characters": 732,
+      "chunks": 3,
+      "indexedCharacters": 809,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "meeting-notes/2025-11-03-production-sync.md",
+      "characters": 749,
+      "chunks": 3,
+      "indexedCharacters": 827,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "meeting-notes/2025-11-17-production-sync.md",
+      "characters": 743,
+      "chunks": 3,
+      "indexedCharacters": 821,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "meeting-notes/2025-12-01-production-sync.md",
+      "characters": 744,
+      "chunks": 3,
+      "indexedCharacters": 822,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "meeting-notes/2025-12-15-production-sync.md",
+      "characters": 709,
+      "chunks": 3,
+      "indexedCharacters": 787,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "meeting-notes/2026-01-12-production-sync.md",
+      "characters": 690,
+      "chunks": 2,
+      "indexedCharacters": 769,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2026-01-26-production-sync.md",
+      "characters": 703,
+      "chunks": 2,
+      "indexedCharacters": 783,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2026-02-09-production-sync.md",
+      "characters": 713,
+      "chunks": 2,
+      "indexedCharacters": 793,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2026-02-23-production-sync.md",
+      "characters": 721,
+      "chunks": 3,
+      "indexedCharacters": 798,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "meeting-notes/2026-03-09-production-sync.md",
+      "characters": 715,
+      "chunks": 2,
+      "indexedCharacters": 795,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2026-03-23-production-sync.md",
+      "characters": 851,
+      "chunks": 3,
+      "indexedCharacters": 928,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "meeting-notes/2026-04-06-production-sync.md",
+      "characters": 715,
+      "chunks": 2,
+      "indexedCharacters": 795,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2026-04-20-production-sync.md",
+      "characters": 698,
+      "chunks": 2,
+      "indexedCharacters": 778,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2026-05-04-production-sync.md",
+      "characters": 744,
+      "chunks": 3,
+      "indexedCharacters": 822,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "meeting-notes/2026-05-18-production-sync.md",
+      "characters": 670,
+      "chunks": 2,
+      "indexedCharacters": 750,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2026-06-01-production-sync.md",
+      "characters": 732,
+      "chunks": 2,
+      "indexedCharacters": 812,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "meeting-notes/2026-06-15-production-sync.md",
+      "characters": 703,
+      "chunks": 2,
+      "indexedCharacters": 783,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "network-specs-applovin.md",
+      "characters": 629,
+      "chunks": 2,
+      "indexedCharacters": 709,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "network-specs-unity-meta.md",
+      "characters": 658,
+      "chunks": 3,
+      "indexedCharacters": 818,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "onboarding-new-dev.md",
+      "characters": 661,
+      "chunks": 3,
+      "indexedCharacters": 821,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "playable-brief-guidelines.md",
+      "characters": 752,
+      "chunks": 3,
+      "indexedCharacters": 912,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "postmortems/2025-07-localization-regression.md",
+      "characters": 622,
+      "chunks": 3,
+      "indexedCharacters": 782,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "postmortems/2025-11-analytics-leak.md",
+      "characters": 545,
+      "chunks": 2,
+      "indexedCharacters": 625,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "qa-checklist.md",
+      "characters": 707,
+      "chunks": 4,
+      "indexedCharacters": 782,
+      "paragraphs": 4,
+      "intactParagraphs": 3
+    },
+    {
+      "path": "sdk-notes-v2.md",
+      "characters": 495,
+      "chunks": 2,
+      "indexedCharacters": 575,
+      "paragraphs": 4,
+      "intactParagraphs": 4
+    },
+    {
+      "path": "sdk-notes-v3.md",
+      "characters": 657,
+      "chunks": 2,
+      "indexedCharacters": 737,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    },
+    {
+      "path": "style-guide-ui.md",
+      "characters": 615,
+      "chunks": 2,
+      "indexedCharacters": 695,
+      "paragraphs": 5,
+      "intactParagraphs": 5
+    }
+  ]
+}

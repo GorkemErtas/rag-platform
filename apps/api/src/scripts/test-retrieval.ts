@@ -8,7 +8,7 @@ const query =
 try {
   console.log(`Query: ${query}\n`);
 
-  const results = await searchDocuments(query, 5);
+  const results = await searchDocuments(query, 20);
 
   results.forEach((result, index) => {
     console.log(
@@ -16,6 +16,9 @@ try {
     );
     console.log(
       `   Similarity: ${result.similarity.toFixed(4)}`,
+    );
+    console.log(
+      `   Relevance: ${result.relevance.toFixed(4)}`,
     );
     console.log(
       `   ${result.content.slice(0, 180).replace(/\n/g, " ")}...`,

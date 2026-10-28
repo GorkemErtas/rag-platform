@@ -1,286 +1,106 @@
 import type { SearchResult } from "@playable-factory/shared";
-import {
-  and,
-  cosineDistance,
-  desc,
-  eq,
-  sql,
-} from "drizzle-orm";
-
+import { and, asc, cosineDistance, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import {
-  documentChunks,
-  documents,
-} from "../db/schema.js";
+import { documentChunks, documents } from "../db/schema.js";
+import { env } from "../config/env.js";
+import { EMBEDDING_CONFIG, RETRIEVAL_CONFIG, type RetrievalMode } from "../config/constants.js";
 import { generateEmbedding } from "./embedding-service.js";
-import { RETRIEVAL_CONFIG } from "../config/constants.js";
+import { balanceRankings, fuseRankings, validateSearch } from "./retrieval-ranking.js";
 
-interface RankedSearchResult extends SearchResult {
-  lexicalRank?: number;
+const compatibleIndex = and(
+  eq(documents.status, "INDEXED"),
+  eq(documents.embeddingModel, env.geminiEmbeddingModel),
+  eq(documents.embeddingDimensions, EMBEDDING_CONFIG.dimensions),
+  isNotNull(documentChunks.embedding),
+);
+
+async function denseCandidates(embedding: number[], limit: number): Promise<SearchResult[]> {
+  const distance = cosineDistance(documentChunks.embedding, embedding);
+  const rows = await db.select({
+    chunkId: documentChunks.id, documentId: documents.id,
+    documentPath: documents.path, documentTitle: documents.title,
+    chunkIndex: documentChunks.chunkIndex, content: documentChunks.content,
+    similarity: sql<number>`1 - (${distance})`,
+  }).from(documentChunks).innerJoin(documents, eq(documentChunks.documentId, documents.id))
+    .where(compatibleIndex)
+    .orderBy(asc(distance), asc(documentChunks.id)).limit(limit);
+  return rows.map((row, index) => ({ ...row, similarity: Number(row.similarity), relevance: Number(row.similarity), retrievalMethod: "dense" as const, denseRank: index + 1 }));
 }
 
-function validateSearch(
+async function lexicalCandidates(query: string, embedding: number[], limit: number): Promise<SearchResult[]> {
+  // The passage is the evidence. Repeated filename/path metadata is not a vote.
+  const passage = sql`to_tsvector('english', ${documentChunks.content})`;
+  // Natural questions contain verbs/qualifiers absent from their answers.
+  // AND-ing every word made the old lexical branch return no candidates.
+  // PostgreSQL normalizes/stems terms; quote_literal safely builds OR syntax.
+  const queryLexemes = sql`tsvector_to_array(to_tsvector('english', ${query}))`;
+  const terms = sql`coalesce((
+    select string_agg(quote_literal(term), ' | ')
+    from unnest(${queryLexemes}) as query_terms(term)
+  ), '')::tsquery`;
+  const coverage = sql<number>`(
+    select count(*) from unnest(${queryLexemes}) as query_terms(term)
+    where ${passage} @@ quote_literal(term)::tsquery
+  )`;
+  const rank = sql`ts_rank_cd(${passage}, ${terms}, 2)`;
+  const rows = await db.select({
+    chunkId: documentChunks.id, documentId: documents.id,
+    documentPath: documents.path, documentTitle: documents.title,
+    chunkIndex: documentChunks.chunkIndex, content: documentChunks.content,
+    similarity: sql<number>`1 - (${cosineDistance(documentChunks.embedding, embedding)})`,
+  }).from(documentChunks).innerJoin(documents, eq(documentChunks.documentId, documents.id))
+    .where(and(compatibleIndex, sql`${passage} @@ ${terms}`))
+    .orderBy(desc(coverage), desc(rank), asc(documentChunks.id)).limit(limit);
+  return rows.map((row) => ({ ...row, similarity: Number(row.similarity), relevance: Number(row.similarity) }));
+}
+
+/** Allows dense/hybrid comparison with the exact same single query embedding. */
+export async function retrieveWithEmbedding(
   query: string,
+  embedding: number[],
   limit: number,
-): string {
-  const normalizedQuery = query.trim();
-
-  if (!normalizedQuery) {
-    throw new Error("Search query cannot be empty");
-  }
-
-  if (limit < 1 || limit > RETRIEVAL_CONFIG.maxSearchLimit) {
-    throw new Error(
-      "Search limit must be between 1 and 20",
-    );
-  }
-
-  return normalizedQuery;
-}
-
-async function generateQueryEmbedding(
-  query: string,
-): Promise<number[]> {
-  return generateEmbedding(query, {
-    type: "query",
-  });
-}
-
-async function runDenseSearch(
-  queryEmbedding: number[],
-  limit: number,
+  mode: RetrievalMode = "dense",
 ): Promise<SearchResult[]> {
-  const similarity = sql<number>`
-    1 - (${cosineDistance(
-      documentChunks.embedding,
-      queryEmbedding,
-    )})
-  `;
-
-  const results = await db
-    .select({
-      chunkId: documentChunks.id,
-      documentId: documents.id,
-      documentPath: documents.path,
-      documentTitle: documents.title,
-      chunkIndex: documentChunks.chunkIndex,
-      content: documentChunks.content,
-      similarity,
-    })
-    .from(documentChunks)
-    .innerJoin(
-      documents,
-      eq(documentChunks.documentId, documents.id),
-    )
-    .where(eq(documents.status, "INDEXED"))
-    .orderBy(desc(similarity))
-    .limit(limit);
-
-  return results.map((result) => {
-    const similarity = Number(result.similarity);
-
-    return {
-      ...result,
-      similarity,
-      relevance: similarity,
-    };
-  });
-}
-
-async function runLexicalSearch(
-  query: string,
-  queryEmbedding: number[],
-  limit: number,
-): Promise<RankedSearchResult[]> {
-  const searchDocument = sql`
-    to_tsvector(
-      'english',
-      coalesce(${documents.title}, '') || ' ' ||
-      ${documents.path} || ' ' ||
-      ${documentChunks.content}
-    )
-  `;
-
-  const searchQuery = sql`
-    websearch_to_tsquery('english', ${query})
-  `;
-
-  const lexicalRank = sql<number>`
-    ts_rank_cd(
-      ${searchDocument},
-      ${searchQuery}
-    )
-  `;
-
-  const similarity = sql<number>`
-    1 - (${cosineDistance(
-      documentChunks.embedding,
-      queryEmbedding,
-    )})
-  `;
-
-  const results = await db
-    .select({
-      chunkId: documentChunks.id,
-      documentId: documents.id,
-      documentPath: documents.path,
-      documentTitle: documents.title,
-      chunkIndex: documentChunks.chunkIndex,
-      content: documentChunks.content,
-      similarity,
-      lexicalRank,
-    })
-    .from(documentChunks)
-    .innerJoin(
-      documents,
-      eq(documentChunks.documentId, documents.id),
-    )
-    .where(
-      and(
-        eq(documents.status, "INDEXED"),
-        sql`${searchDocument} @@ ${searchQuery}`,
-      ),
-    )
-    .orderBy(desc(lexicalRank))
-    .limit(limit);
-
-  return results.map((result) => {
-    const similarity = Number(result.similarity);
-
-    return {
-      ...result,
-      similarity,
-      relevance: similarity,
-      lexicalRank: Number(result.lexicalRank),
-    };
-  });
+  validateSearch(query, limit);
+  if (embedding.length !== EMBEDDING_CONFIG.dimensions || embedding.some((value) => !Number.isFinite(value))) {
+    throw new Error("Invalid query embedding");
+  }
+  if (mode === "dense") return denseCandidates(embedding, limit);
+  const candidateLimit = Math.min(RETRIEVAL_CONFIG.maxCandidateCount, Math.max(20, limit * 4));
+  const [dense, lexical] = await Promise.all([
+    denseCandidates(embedding, candidateLimit),
+    lexicalCandidates(query, embedding, candidateLimit),
+  ]);
+  return mode === "rrf"
+    ? fuseRankings([dense, lexical], limit).map((result) => ({ ...result, retrievalMethod: "rrf" as const }))
+    : balanceRankings(dense, lexical, limit);
 }
 
 export async function searchDocumentsDense(
   query: string,
   limit: number = RETRIEVAL_CONFIG.defaultTopK,
 ): Promise<SearchResult[]> {
-  const normalizedQuery = validateSearch(
-    query,
-    limit,
-  );
-
-  const queryEmbedding =
-    await generateQueryEmbedding(normalizedQuery);
-
-  return runDenseSearch(queryEmbedding, limit);
+  const normalized = validateSearch(query, limit);
+  const embedding = await generateEmbedding(normalized, { type: "query" });
+  return retrieveWithEmbedding(normalized, embedding, limit, "dense");
 }
 
+/** Balanced dense/lexical retrieval with one shared query embedding. */
 export async function searchDocumentsHybrid(
   query: string,
   limit: number = RETRIEVAL_CONFIG.defaultTopK,
 ): Promise<SearchResult[]> {
-  const normalizedQuery = validateSearch(
-    query,
-    limit,
-  );
-
-  const queryEmbedding =
-    await generateQueryEmbedding(normalizedQuery);
-
-  const candidateLimit = Math.min(
-    RETRIEVAL_CONFIG.maxCandidateCount,
-    Math.max(
-      limit * RETRIEVAL_CONFIG.candidateMultiplier,
-      RETRIEVAL_CONFIG.minCandidateCount,
-    ),
-  );
-
-  const [vectorResults, lexicalResults] =
-    await Promise.all([
-      runDenseSearch(
-        queryEmbedding,
-        candidateLimit,
-      ),
-      runLexicalSearch(
-        normalizedQuery,
-        queryEmbedding,
-        candidateLimit,
-      ),
-    ]);
-
-  const fusedResults = new Map<
-    number,
-    {
-      result: SearchResult;
-      score: number;
-    }
-  >();
-
-  vectorResults.forEach((result, index) => {
-    const rank = index + 1;
-
-    fusedResults.set(result.chunkId, {
-      result,
-      score:
-        RETRIEVAL_CONFIG.vectorWeight /
-        (RETRIEVAL_CONFIG.rrfK + rank),
-    });
-  });
-
-  lexicalResults.forEach((result, index) => {
-    const rank = index + 1;
-
-    const lexicalScore =
-      RETRIEVAL_CONFIG.lexicalWeight /
-      (RETRIEVAL_CONFIG.rrfK + rank);
-
-    const existing =
-      fusedResults.get(result.chunkId);
-
-    if (existing) {
-      existing.score += lexicalScore;
-      return;
-    }
-
-    fusedResults.set(result.chunkId, {
-      result,
-      score: lexicalScore,
-    });
-  });
-
-    const rankedResults = [...fusedResults.values()]
-  .sort((left, right) => {
-    if (right.score !== left.score) {
-      return right.score - left.score;
-    }
-
-    return (
-      right.result.similarity -
-      left.result.similarity
-    );
-  })
-  .slice(0, limit);
-
-const topHybridScore = rankedResults[0]?.score ?? 0;
-
-return rankedResults.map(({ result, score }) => {
-  const normalizedHybridScore =
-    topHybridScore > 0
-      ? score / topHybridScore
-      : 0;
-
-  const relevance =
-    RETRIEVAL_CONFIG.denseRelevanceWeight *
-      result.similarity +
-    RETRIEVAL_CONFIG.hybridRelevanceWeight *
-      normalizedHybridScore;
-
-  return {
-    ...result,
-    relevance: Math.min(Math.max(relevance, 0), 1),
-  };
-});
+  const normalized = validateSearch(query, limit);
+  const embedding = await generateEmbedding(normalized, { type: "query" });
+  return retrieveWithEmbedding(normalized, embedding, limit, "hybrid");
 }
 
+// Chat, HTTP search and MCP use the same configured strategy.
 export async function searchDocuments(
   query: string,
   limit: number = RETRIEVAL_CONFIG.defaultTopK,
 ): Promise<SearchResult[]> {
-  return searchDocumentsHybrid(query, limit);
+  const normalized = validateSearch(query, limit);
+  const embedding = await generateEmbedding(normalized, { type: "query" });
+  return retrieveWithEmbedding(normalized, embedding, limit, env.retrievalMode);
 }
