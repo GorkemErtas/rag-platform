@@ -10,6 +10,12 @@ control, an admin dashboard, an MCP search interface and optional retrieval
 evaluation. The current setup runs locally with Docker PostgreSQL, an Express
 API and a Next.js frontend.
 
+For the public synthetic portfolio demo, see
+[Railway deployment](docs/RAILWAY_DEPLOYMENT.md). Its separate web/API images
+exclude the original case-study corpus and use a dedicated demo database,
+read-only USER sessions and persistent Gemini usage limits. Deployment and data
+initialization require operator review and explicit commands.
+
 ## Features
 
 -   Repeatable document ingestion with observable ingestion status
@@ -193,7 +199,11 @@ To run the MCP server separately:
 pnpm dev:mcp
 ```
 
-## Demo Credentials
+## Local Development Credentials
+
+These accounts are for local development only. Production/demo mode refuses
+development seeding; public demo sessions use no password and grant only USER
+access. Repeat local seeding preserves existing account credentials.
 
 **Regular User**
 
@@ -346,10 +356,11 @@ pnpm --filter @playable-factory/api lint
 pnpm build
 ```
 
-The database transaction integration test is skipped unless TEST_DATABASE_URL
+The PostgreSQL integration tests are skipped unless TEST_DATABASE_URL
 points at an isolated PostgreSQL database with pgvector installed. The full
-workspace production build passes. Frontend lint still reports two existing
-React effect/state errors in the admin and chat pages; see the audit.
+workspace production build and API/frontend lint pass. The Railway guide records
+the current verification commands, remaining tooling advisories and manual
+release checks.
 
 ### Shared Contracts
 
