@@ -4,35 +4,32 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type {
-  AuthUser,
   ChatResponse,
 } from "@playable-factory/shared";
 
 import { askQuestion } from "@/lib/api";
 import {
   clearAuthSession,
-  getAuthUser,
+  useAuthUser,
 } from "@/lib/auth";
 
 export default function ChatPage() {
   const router = useRouter();
 
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user, isReady } = useAuthUser();
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<ChatResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const currentUser = getAuthUser();
-
-    if (!currentUser) {
+    if (!isReady) return;
+    if (!user) {
       router.replace("/");
       return;
     }
 
-    setUser(currentUser);
-  }, [router]);
+  }, [router, user, isReady]);
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
@@ -160,9 +157,10 @@ export default function ChatPage() {
 
               <textarea
                 id="question"
+                maxLength={2000}
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
-                placeholder="Ask about SDKs, build pipelines, incidents, localization..."
+                placeholder={process.env.NEXT_PUBLIC_DEMO_MODE === "true" ? "Ask about the fictional Aurora Garden project..." : "Ask about SDKs, build pipelines, incidents, localization..."}
                 rows={4}
                 className="w-full resize-none bg-transparent text-sm leading-6 text-text-primary outline-none placeholder:text-text-muted sm:text-base"
               />
@@ -260,14 +258,20 @@ export default function ChatPage() {
             </p>
 
             <div className="mt-3 space-y-2">
-              {[
+              {(process.env.NEXT_PUBLIC_DEMO_MODE === "true" ? [
+                "Which languages does Aurora Garden version 1.1 support?",
+                "What caused the missing moonflower icons?",
+                "What must the fictional release checklist include?",
+                "When will the color-blind palette ship?",
+                "How much revenue does Aurora Garden earn?",
+              ] : [
                 "What is the maximum file size for an AppLovin playable, and how does it ship?",
                 "How do I initialize the current Lumen SDK, and what happened to lumen.track?",
                 "Why are sound assets built in a separate pass?",
                 "What caused the March 2026 AppLovin rejections and what was fixed?",
                 "Which languages must every playable ship with, and what is the fallback?",
                 "How many paid vacation days do employees receive each year?",
-              ].map((example) => (
+              ]).map((example) => (
                 <button
                   key={example}
                   type="button"

@@ -1,17 +1,19 @@
 import type { SearchResult } from "@playable-factory/shared";
-import { and, asc, cosineDistance, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { and, asc, cosineDistance, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { documentChunks, documents } from "../db/schema.js";
 import { env } from "../config/env.js";
 import { EMBEDDING_CONFIG, RETRIEVAL_CONFIG, type RetrievalMode } from "../config/constants.js";
 import { generateEmbedding } from "./embedding-service.js";
 import { balanceRankings, fuseRankings, validateSearch } from "./retrieval-ranking.js";
+import { DEMO_PATHS } from "./demo-service.js";
 
 const compatibleIndex = and(
   eq(documents.status, "INDEXED"),
   eq(documents.embeddingModel, env.geminiEmbeddingModel),
   eq(documents.embeddingDimensions, EMBEDDING_CONFIG.dimensions),
   isNotNull(documentChunks.embedding),
+  env.demoMode ? inArray(documents.path, DEMO_PATHS) : undefined,
 );
 
 async function denseCandidates(embedding: number[], limit: number): Promise<SearchResult[]> {

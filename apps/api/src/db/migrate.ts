@@ -20,11 +20,14 @@ const migrationsFolder = path.resolve(
 
 const pool = new Pool({
   connectionString: env.databaseUrl,
+  connectionTimeoutMillis: 5000,
 });
 
 const db = drizzle(pool);
 
 try {
+  const extension = await pool.query("select 1 from pg_available_extensions where name = 'vector'");
+  if (!extension.rowCount) throw new Error("pgvector is not installed on this PostgreSQL server");
   await migrate(db, {
     migrationsFolder,
   });
@@ -32,6 +35,9 @@ try {
   console.log(
     "Database migrations completed successfully.",
   );
+} catch {
+  console.error("Migration failed. Verify database connectivity, pgvector availability and migration permissions. No reset or rollback was attempted.");
+  process.exitCode = 1;
 } finally {
   await pool.end();
 }

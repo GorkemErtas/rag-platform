@@ -2,8 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/lib/api";
+import { login, startDemo } from "@/lib/api";
 import { saveAuthSession } from "@/lib/auth";
+
+const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -22,7 +24,7 @@ export default function LoginPage() {
   setIsLoading(true);
 
   try {
-    const result = await login({
+    const result = demoMode ? await startDemo() : await login({
       email,
       password,
     });
@@ -109,7 +111,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-xs text-slate-500">
-          Playable Factory · AI Software Engineer Case Study
+          {demoMode ? "Portfolio demo · Fictional documents only" : "Playable Factory · AI Software Engineer Case Study"}
         </p>
       </section>
 
@@ -132,16 +134,15 @@ export default function LoginPage() {
 
           <div className="mb-8">
             <p className="mb-2 text-sm font-medium text-brand">
-              Welcome back
+              {demoMode ? "Public portfolio demo" : "Welcome back"}
             </p>
 
             <h2 className="text-3xl font-semibold tracking-[-0.03em] text-text-primary">
-              Sign in to your workspace
+              {demoMode ? "Explore a synthetic knowledge base" : "Sign in to your workspace"}
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-text-secondary">
-              Use your account to access grounded search, chat, and
-              workspace tools.
+              {demoMode ? "Read-only access to three fictional documents. Questions are limited to 2,000 characters, with shared daily usage limits." : "Use your account to access grounded search, chat, and workspace tools."}
             </p>
           </div>
 
@@ -149,6 +150,7 @@ export default function LoginPage() {
             onSubmit={handleSubmit}
             className="space-y-5"
           >
+            {!demoMode && <>
             <div>
               <label
                 htmlFor="email"
@@ -206,6 +208,7 @@ export default function LoginPage() {
               </div>
             </div>
 
+            </>}
             {error && (
               <div
                 role="alert"
@@ -229,7 +232,7 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  Sign in
+                  {demoMode ? "Enter read-only demo" : "Sign in"}
                   <ArrowIcon />
                 </>
               )}

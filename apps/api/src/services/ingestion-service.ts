@@ -9,6 +9,8 @@ import { loadCorpus, type CorpusDocument } from "./corpus-service.js";
 import { generateEmbedding } from "./embedding-service.js";
 import { createChecksum, indexingFingerprint, isIndexCurrent } from "./indexing-profile.js";
 import { sleep } from "../utils/async.js";
+import { assertDemoDatabase } from "./demo-service.js";
+import { logFailure } from "../utils/log.js";
 
 export interface IngestionResult {
   runId: number;
@@ -59,7 +61,7 @@ export async function indexDocument(
     });
     return "indexed";
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown ingestion error";
+    const errorMessage = "Document indexing failed; previous content was retained";
     await database.insert(documents).values({ path: source.path, title: source.title, status: "FAILED", errorMessage })
       .onConflictDoUpdate({
         target: documents.path,
@@ -71,6 +73,9 @@ export async function indexDocument(
 }
 
 export async function ingestCorpus(): Promise<IngestionResult> {
+  if (env.production && !process.env.CORPUS_PATH) throw new Error("Production requires explicit CORPUS_PATH");
+  // Verify isolation before taking a lock or updating any rows.
+  await assertDemoDatabase();
   // Session lock serializes CLI and admin runs across processes, without holding
   // a transaction open during slow embedding/API requests.
   const lock = await pool.connect();
@@ -106,7 +111,7 @@ export async function ingestCorpus(): Promise<IngestionResult> {
         console.log(`[${outcome}] ${source.path}`);
       } catch (error) {
         counts.documentsFailed += 1;
-        console.error(`[failed] ${source.path}:`, error instanceof Error ? error.message : "Unknown error");
+        logFailure(`[failed] ${source.path}`, error);
       }
       await db.update(ingestionRuns).set(counts).where(eq(ingestionRuns.id, runId));
     }
@@ -117,7 +122,7 @@ export async function ingestCorpus(): Promise<IngestionResult> {
     return { runId, ...counts, missingPaths };
   } catch (error) {
     if (runId !== undefined) {
-      await db.update(ingestionRuns).set({ ...counts, status: "FAILED", completedAt: new Date(), errorMessage: error instanceof Error ? error.message : "Unknown error" })
+      await db.update(ingestionRuns).set({ ...counts, status: "FAILED", completedAt: new Date(), errorMessage: "Ingestion failed; check configuration and provider availability" })
         .where(eq(ingestionRuns.id, runId));
     }
     throw error;

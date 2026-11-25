@@ -6,8 +6,9 @@ import { fileURLToPath } from "node:url";
 const currentFile = fileURLToPath(import.meta.url);
 const currentDir = path.dirname(currentFile);
 
-config({
+if (process.env.NODE_ENV !== "production") config({
   path: path.resolve(currentDir, "../../.env"),
+  quiet: true,
 });
 
 if (!process.env.DATABASE_URL) {

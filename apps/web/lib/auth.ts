@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useSyncExternalStore } from "react";
 import type {
   AuthResponse,
   AuthUser,
@@ -5,6 +8,11 @@ import type {
 
 const TOKEN_KEY = "lumen_auth_token";
 const USER_KEY = "lumen_auth_user";
+const AUTH_EVENT = "lumen-auth-change";
+
+function storage(): Storage {
+  return process.env.NEXT_PUBLIC_DEMO_MODE === "true" ? sessionStorage : localStorage;
+}
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
@@ -17,11 +25,12 @@ export function saveAuthSession(
     return;
   }
 
-  localStorage.setItem(TOKEN_KEY, auth.token);
-  localStorage.setItem(
+  storage().setItem(TOKEN_KEY, auth.token);
+  storage().setItem(
     USER_KEY,
     JSON.stringify(auth.user),
   );
+  window.dispatchEvent(new Event(AUTH_EVENT));
 }
 
 export function getAuthToken(): string | null {
@@ -29,7 +38,7 @@ export function getAuthToken(): string | null {
     return null;
   }
 
-  return localStorage.getItem(TOKEN_KEY);
+  return storage().getItem(TOKEN_KEY);
 }
 
 export function getAuthUser(): AuthUser | null {
@@ -37,7 +46,7 @@ export function getAuthUser(): AuthUser | null {
     return null;
   }
 
-  const value = localStorage.getItem(USER_KEY);
+  const value = storage().getItem(USER_KEY);
 
   if (!value) {
     return null;
@@ -56,6 +65,24 @@ export function clearAuthSession(): void {
     return;
   }
 
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  storage().removeItem(TOKEN_KEY);
+  storage().removeItem(USER_KEY);
+  window.dispatchEvent(new Event(AUTH_EVENT));
+}
+
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener(AUTH_EVENT, callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener(AUTH_EVENT, callback);
+  };
+}
+
+export function useAuthUser(): { user: AuthUser | null; isReady: boolean } {
+  const value = useSyncExternalStore(subscribe, () => storage().getItem(USER_KEY), () => undefined);
+  const user = useMemo(() => {
+    try { return value ? JSON.parse(value) as AuthUser : null; } catch { return null; }
+  }, [value]);
+  return { user, isReady: value !== undefined };
 }
