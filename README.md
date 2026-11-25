@@ -1,4 +1,4 @@
-# Playable Factory RAG Case
+# RAG PLATFORM
 
 A full-stack Retrieval-Augmented Generation (RAG) application built for
 the Playable Factory AI Software Engineer case study.
