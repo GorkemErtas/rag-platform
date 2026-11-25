@@ -5,6 +5,7 @@ import { pool, db } from "../db/index.js";
 import { users } from "../db/schema.js";
 import { AUTH_CONFIG } from "../config/constants.js";
 import type { UserRole } from "@playable-factory/shared";
+import { env } from "../config/env.js";
 
 interface DemoUser {
   email: string;
@@ -26,6 +27,7 @@ const demoUsers: DemoUser[] = [
 ];
 
 try {
+  if (env.production || env.demoMode) throw new Error("Development seed is disabled in production and demo mode");
   for (const demoUser of demoUsers) {
     const passwordHash = await bcrypt.hash(
       demoUser.password,
@@ -39,15 +41,7 @@ try {
       .limit(1);
 
     if (existing.length > 0) {
-      await db
-        .update(users)
-        .set({
-          passwordHash,
-          role: demoUser.role,
-        })
-        .where(eq(users.email, demoUser.email));
-
-      console.log(`[updated] ${demoUser.email}`);
+      console.log(`[kept] ${demoUser.email}`);
       continue;
     }
 
@@ -61,6 +55,9 @@ try {
   }
 
   console.log("Database seed completed successfully.");
+} catch {
+  console.error("Development seed refused or failed; existing credentials were preserved.");
+  process.exitCode = 1;
 } finally {
   await pool.end();
 }

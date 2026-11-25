@@ -8,12 +8,37 @@
     "dev:api": "pnpm --filter @playable-factory/api dev",
     "dev:mcp": "pnpm --filter @playable-factory/mcp dev",
     "build": "pnpm -r build",
+    "build:api": "pnpm --filter @playable-factory/api... build",
+    "build:web": "pnpm --filter @playable-factory/web... build",
+    "start:api": "pnpm --filter @playable-factory/api start",
+    "start:web": "pnpm --filter @playable-factory/web start",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm --filter @playable-factory/shared build && pnpm --filter @playable-factory/api test",
+    "test:smoke:web": "node scripts/smoke-web.mjs",
+    "test:smoke:api": "node scripts/smoke-api.mjs",
     "db:up": "docker compose up -d --wait postgres",
     "db:stop": "docker compose stop postgres",
     "db:migrate": "pnpm --filter @playable-factory/api db:migrate",
     "db:seed": "pnpm --filter @playable-factory/api db:seed",
+    "db:demo:init": "pnpm --filter @playable-factory/api db:demo:init",
+    "db:migrate:production": "pnpm --filter @playable-factory/api db:migrate:production",
+    "ingest:production": "pnpm --filter @playable-factory/api ingest:production",
     "ingest": "pnpm --filter @playable-factory/api ingest",
     "setup": "pnpm db:up && pnpm --filter @playable-factory/shared build && pnpm db:migrate && pnpm db:seed"
   },
-  "packageManager": "pnpm@10.34.5"
+  "packageManager": "pnpm@10.34.5",
+  "engines": { "node": ">=22.12.0 <27" },
+  "pnpm": {
+    "overrides": {
+      "body-parser@>=2.0.0 <2.4.0": "2.4.0",
+      "fast-uri@>=3.0.0 <3.1.9": "3.1.9",
+      "source-map-js@>=1.0.0 <1.2.2": "1.2.2",
+      "hono@>=4.0.0 <4.13.16": "4.13.16",
+      "@hono/node-server@>=2.0.0 <2.1.6": "2.1.6",
+      "ip-address@>=10.0.0 <10.7.4": "10.7.4",
+      "brace-expansion@>=1.0.0 <1.1.21": "1.1.21",
+      "brace-expansion@>=5.0.0 <5.0.12": "5.0.12",
+      "js-yaml@>=4.0.0 <4.3.2": "4.3.2"
+    }
+  }
 }

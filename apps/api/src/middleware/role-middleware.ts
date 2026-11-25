@@ -3,6 +3,7 @@ import type {
   Request,
   Response,
 } from "express";
+import { env } from "../config/env.js";
 
 export function requireAdmin(
   req: Request,
@@ -16,7 +17,7 @@ export function requireAdmin(
     return;
   }
 
-  if (req.user.role !== "ADMIN") {
+  if (env.demoMode || req.user.role !== "ADMIN") {
     res.status(403).json({
       error: "Admin access required",
     });

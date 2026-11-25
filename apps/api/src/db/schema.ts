@@ -8,6 +8,8 @@ import {
   pgEnum,
   uniqueIndex,
   vector,
+  primaryKey,
+  index,
 } from "drizzle-orm/pg-core";
 
 import { EMBEDDING_CONFIG } from "../config/constants.js";
@@ -104,3 +106,18 @@ export const searchLogs = pgTable("search_logs", {
     .notNull()
     .defaultNow(),
 });
+
+export const deploymentIdentity = pgTable("deployment_identity", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
+
+export const requestBudgets = pgTable("request_budgets", {
+  key: text("key").notNull(),
+  windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  used: integer("used").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.key, table.windowStart] }),
+  index("request_budgets_expiry_idx").on(table.expiresAt),
+]);

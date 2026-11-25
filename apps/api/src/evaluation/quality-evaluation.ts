@@ -175,9 +175,9 @@ async function save() {
 
 try {
   await main();
-} catch (error) {
+} catch {
   report.state = "failed";
-  report.error = error instanceof Error ? error.message.replace(/postgres(?:ql)?:\/\/[^\s"']+/g, "[redacted database URL]") : "Unknown evaluation error";
+  report.error = "Evaluation failed; check database connectivity, corpus selection and provider configuration";
   console.error("Evaluation failed; no quality improvement established. See report:", output);
   process.exitCode = 1;
 } finally {

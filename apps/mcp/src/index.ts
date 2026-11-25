@@ -10,8 +10,9 @@ const currentFile = fileURLToPath(import.meta.url);
 const currentDir = path.dirname(currentFile);
 const rootDir = path.resolve(currentDir, "../../..");
 
-config({
+if (process.env.NODE_ENV !== "production") config({
   path: path.join(rootDir, ".env"),
+  quiet: true,
 });
 
 const apiBaseUrl =
@@ -34,6 +35,7 @@ async function callSearchApi(
   limit: number,
 ): Promise<unknown> {
   const response = await fetch(`${apiBaseUrl}/api/search`, {
+    signal: AbortSignal.timeout(30000),
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -46,10 +48,8 @@ async function callSearchApi(
   });
 
   if (!response.ok) {
-    const body = await response.text();
-
     throw new Error(
-      `Search API failed with ${response.status}: ${body}`,
+      `Search API failed with status ${response.status}`,
     );
   }
 
@@ -65,7 +65,7 @@ server.tool(
   "search_documents",
   "Search indexed corpus passages by semantic relevance. Results are search candidates, not verified answers; similarity and relevance are ranking signals, not confidence.",
   {
-    query: z.string().min(1),
+    query: z.string().trim().min(1).max(2000),
     limit: z.number().int().min(1).max(20).default(5),
   },
   async ({ query, limit }) => {

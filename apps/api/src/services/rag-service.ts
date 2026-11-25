@@ -5,6 +5,7 @@ import { RAG_CONFIG } from "../config/constants.js";
 import { searchDocuments } from "./retrieval-service.js";
 import { buildEvidenceContext, parseGroundedAnswer, noAnswerResponse, type GroundingFailureReason } from "./grounding-service.js";
 import type { SearchResult } from "@playable-factory/shared";
+import { reserveGeminiCall } from "./usage-service.js";
 
 export type { ChatResponse as RagResponse, ChatSource as RagSource } from "@playable-factory/shared";
 let ai: GoogleGenAI | undefined;
@@ -83,8 +84,11 @@ export async function answerUsingEvidence(question: string, results: SearchResul
     telemetry: { requests: 0, latencyMs: 0, promptTokens: null, outputTokens: null, totalTokens: null, validation: "empty-context", ...contextCounts },
   };
   if (!env.geminiApiKey) throw new Error("GEMINI_API_KEY is not defined");
-  ai ??= new GoogleGenAI({ apiKey: env.geminiApiKey });
+  ai ??= new GoogleGenAI({ apiKey: env.geminiApiKey,
+    ...(env.demoMode ? { httpOptions: { timeout: 15000, retryOptions: { attempts: 1 } } } : {}),
+  });
   const started = performance.now();
+  await reserveGeminiCall();
   onRequest?.();
   const generated = await ai.models.generateContent({
     model: env.geminiChatModel,
@@ -96,6 +100,7 @@ export async function answerUsingEvidence(question: string, results: SearchResul
       })),
     }),
     config: {
+      ...(env.demoMode ? { maxOutputTokens: 1024 } : {}),
       systemInstruction: GROUNDING_INSTRUCTIONS,
       temperature: 0,
       responseMimeType: "application/json",

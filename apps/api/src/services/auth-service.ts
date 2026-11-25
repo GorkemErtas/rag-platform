@@ -12,6 +12,9 @@ import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 import { AUTH_CONFIG } from "../config/constants.js";
 
+export const JWT_ISSUER = "rag-platform-api";
+export const JWT_AUDIENCE = "rag-platform-web";
+
 function getJwtSecret(): string {
   if (!env.jwtSecret) {
     throw new Error("JWT_SECRET is not defined");
@@ -20,19 +23,28 @@ function getJwtSecret(): string {
   return env.jwtSecret;
 }
 
-function createToken(user: AuthUser): string {
+function createToken(user: AuthUser, demo = false): string {
   return jwt.sign(
     {
       sub: user.id,
       email: user.email,
       role: user.role,
+      demo,
     },
     getJwtSecret(),
     {
-      expiresIn:
-        env.jwtExpiresIn as SignOptions["expiresIn"],
+      algorithm: "HS256",
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+      expiresIn: demo ? "15m" : env.jwtExpiresIn as SignOptions["expiresIn"],
     },
   );
+}
+
+export function createDemoSession(): AuthResponse {
+  if (!env.demoMode) throw new Error("Demo is disabled");
+  const user: AuthUser = { id: 0, email: "visitor@portfolio.invalid", role: "USER" };
+  return { token: createToken(user, true), user };
 }
 
 export async function registerUser(
@@ -40,6 +52,7 @@ export async function registerUser(
   password: string,
   role: UserRole = "USER",
 ): Promise<AuthResponse> {
+  if (env.demoMode || env.production) throw new Error("Registration is disabled in production and demo mode");
   const normalizedEmail = email.trim().toLowerCase();
 
   const existingUser = await db
@@ -90,7 +103,11 @@ export async function loginUser(
   email: string,
   password: string,
 ): Promise<AuthResponse> {
+  if (env.demoMode) throw new Error("Password login is disabled in demo mode");
   const normalizedEmail = email.trim().toLowerCase();
+  if (env.production && ["user@demo.local", "admin@demo.local"].includes(normalizedEmail)) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
 
   const [userRecord] = await db
     .select()

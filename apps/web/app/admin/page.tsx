@@ -4,20 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type {
-  AuthUser,
   DashboardResponse,
 } from "@playable-factory/shared";
 
 import { getDashboard, runIngestion } from "@/lib/api";
 import {
   clearAuthSession,
-  getAuthUser,
+  useAuthUser,
 } from "@/lib/auth";
 
 export default function AdminPage() {
   const router = useRouter();
 
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user, isReady } = useAuthUser();
   const [dashboard, setDashboard] =
     useState<DashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,19 +25,16 @@ export default function AdminPage() {
   const [ingestionMessage, setIngestionMessage] = useState("");
 
   useEffect(() => {
-    const currentUser = getAuthUser();
-
-    if (!currentUser) {
+    if (!isReady) return;
+    if (!user) {
       router.replace("/");
       return;
     }
 
-    if (currentUser.role !== "ADMIN") {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === "true" || user.role !== "ADMIN") {
       router.replace("/chat");
       return;
     }
-
-    setUser(currentUser);
 
     async function loadDashboard() {
       try {
@@ -56,7 +52,7 @@ export default function AdminPage() {
     }
 
     void loadDashboard();
-  }, [router]);
+  }, [router, user, isReady]);
 
   const answeredRate = useMemo(() => {
     if (!dashboard || dashboard.stats.totalSearches === 0) {

@@ -1,39 +1,19 @@
-import type { HealthResponse } from "@playable-factory/shared";
-import cors from "cors";
-import express from "express";
+import { createApp, checkReadiness } from "./app.js";
+import { env, validateServerEnvironment } from "./config/env.js";
+import { pool } from "./db/index.js";
 
-import { env } from "./config/env.js";
-import { adminRouter } from "./routes/admin-route.js";
-import { authRouter } from "./routes/auth-route.js";
-import { chatRouter } from "./routes/chat-route.js";
-import { searchRouter } from "./routes/search-route.js";
-
-const app = express();
-
-app.use(
-  cors({
-    origin: env.corsOrigin,
-  }),
-);
-
-app.use(express.json());
-
-app.use("/api/auth", authRouter);
-app.use("/api/chat", chatRouter);
-app.use("/api/admin", adminRouter);
-app.use("/api/search", searchRouter);
-
-app.get("/health", (_req, res) => {
-  const response: HealthResponse = {
-    status: "ok",
-    service: "api",
+try {
+  validateServerEnvironment();
+  if (env.production || env.demoMode) await checkReadiness();
+  const server = createApp().listen(env.port, "0.0.0.0", () => console.log(`API listening on port ${env.port}`));
+  const shutdown = () => {
+    server.close(() => { void pool.end().then(() => process.exit(0)); });
+    setTimeout(() => process.exit(1), 10000).unref();
   };
-
-  res.json(response);
-});
-
-app.listen(env.port, () => {
-  console.log(
-    `API listening on http://localhost:${env.port}`,
-  );
-});
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+} catch {
+  console.error("API startup failed. Check required service variables, migrations, pgvector and demo database initialization.");
+  await pool.end();
+  process.exitCode = 1;
+}

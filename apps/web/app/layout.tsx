@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s | Lumen Knowledge",
   },
   description:
-    "A grounded RAG workspace for searching internal Playable Factory knowledge.",
+    "A grounded RAG workspace with cited answers and a synthetic portfolio demo.",
 };
 
 export default function RootLayout({

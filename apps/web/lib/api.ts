@@ -77,6 +77,10 @@ export function login(
   
 }
 
+export function startDemo(): Promise<AuthResponse> {
+  return request<AuthResponse>("/api/auth/demo", { method: "POST" });
+}
+
 export function askQuestion(
   payload: ChatRequest,
 ): Promise<ChatResponse> {

@@ -20,7 +20,8 @@ test("chat/search preserve authentication and reject malformed requests before m
   const server = app.listen(0, "127.0.0.1");
   await once(server, "listening");
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const token = jwt.sign({ sub: "1", email: "test@example.invalid", role: "USER" }, env.jwtSecret);
+  const token = jwt.sign({ sub: "1", email: "test@example.invalid", role: "USER" }, env.jwtSecret,
+    { issuer: "rag-platform-api", audience: "rag-platform-web", expiresIn: "1h" });
   const post = (path: string, body: unknown, headers: Record<string, string> = {}) => fetch(`${base}${path}`, {
     method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body),
   });

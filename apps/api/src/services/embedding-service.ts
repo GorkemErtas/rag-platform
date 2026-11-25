@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { env } from "../config/env.js";
 import { EMBEDDING_CONFIG } from "../config/constants.js";
 import { sleep } from "../utils/async.js";
+import { reserveGeminiCall } from "./usage-service.js";
 
 let ai: GoogleGenAI | undefined;
 
@@ -79,9 +80,13 @@ async function requestEmbedding(
   options: GenerateEmbeddingOptions,
 ) {
   if (!env.geminiApiKey) throw new Error("GEMINI_API_KEY is not defined");
-  ai ??= new GoogleGenAI({ apiKey: env.geminiApiKey });
-  for (let attempt = 0; attempt <= EMBEDDING_CONFIG.maxRetries; attempt += 1) {
+  ai ??= new GoogleGenAI({ apiKey: env.geminiApiKey,
+    ...(env.demoMode ? { httpOptions: { timeout: 15000, retryOptions: { attempts: 1 } } } : {}),
+  });
+  const maxRetries = env.demoMode ? 0 : EMBEDDING_CONFIG.maxRetries;
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     try {
+      await reserveGeminiCall();
       options.onRequest?.();
       return await ai.models.embedContent({
         model: env.geminiEmbeddingModel,
@@ -100,7 +105,7 @@ async function requestEmbedding(
     } catch (error) {
       if (
         !isRateLimitError(error) ||
-        attempt === EMBEDDING_CONFIG.maxRetries
+        attempt === maxRetries
       ) {
         throw error;
       }

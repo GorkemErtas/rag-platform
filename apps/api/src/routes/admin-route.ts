@@ -17,6 +17,7 @@ import {
 import { requireAuth } from "../middleware/auth-middleware.js";
 import { requireAdmin } from "../middleware/role-middleware.js";
 import { ingestCorpus } from "../services/ingestion-service.js";
+import { logFailure } from "../utils/log.js";
 
 export const adminRouter = Router();
 
@@ -125,7 +126,7 @@ adminRouter.get("/dashboard", async (_req, res) => {
 
     res.json(response);
   } catch (error) {
-    console.error("Dashboard request failed:", error);
+    logFailure("Dashboard request failed", error);
 
     res.status(500).json({
       error: "Failed to load dashboard",
@@ -142,7 +143,7 @@ adminRouter.post("/ingestion", async (_req, res) => {
       ...result,
     });
   } catch (error) {
-    console.error("Admin ingestion failed:", error);
+    logFailure("Admin ingestion failed", error);
 
     res.status(500).json({
       error: "Corpus ingestion failed",

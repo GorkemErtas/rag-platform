@@ -2,7 +2,7 @@ import type { SearchResult } from "@playable-factory/shared";
 import { RETRIEVAL_CONFIG } from "../config/constants.js";
 
 export function validateSearch(query: string, limit: number): string {
-  if (!query.trim()) throw new Error("Search query cannot be empty");
+  if (!query.trim() || query.trim().length > 2000) throw new Error("Search query must contain 1 to 2000 characters");
   if (!Number.isInteger(limit) || limit < 1 || limit > RETRIEVAL_CONFIG.maxSearchLimit) {
     throw new Error(`Search limit must be an integer between 1 and ${RETRIEVAL_CONFIG.maxSearchLimit}`);
   }

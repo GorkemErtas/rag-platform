@@ -17,8 +17,8 @@ try {
   if (result.documentsFailed > 0) {
     process.exitCode = 1;
   }
-} catch (error) {
-  console.error("Corpus ingestion failed:", error);
+} catch {
+  console.error("Corpus ingestion failed. Check corpus selection, demo database identity and provider configuration.");
   process.exitCode = 1;
 } finally {
   await pool.end();
