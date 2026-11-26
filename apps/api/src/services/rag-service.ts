@@ -6,6 +6,8 @@ import { searchDocuments } from "./retrieval-service.js";
 import { buildEvidenceContext, parseGroundedAnswer, noAnswerResponse, type GroundingFailureReason } from "./grounding-service.js";
 import type { SearchResult } from "@playable-factory/shared";
 import { reserveGeminiCall } from "./usage-service.js";
+import { getQueryCacheNamespace, ragResponses, queryCacheKey } from "./query-cache.js";
+import { validateSearch } from "./retrieval-ranking.js";
 
 export type { ChatResponse as RagResponse, ChatSource as RagSource } from "@playable-factory/shared";
 let ai: GoogleGenAI | undefined;
@@ -123,15 +125,26 @@ export async function answerUsingEvidence(question: string, results: SearchResul
   };
 }
 
-export async function answerQuestion(question: string): Promise<ChatResponse> {
-  if (!question.trim()) throw new Error("Question cannot be empty");
-  const results = await searchDocuments(question.trim(), RAG_CONFIG.maxContextChunks);
-  const { response, telemetry } = await answerUsingEvidence(question, results);
-  console.info("[rag]", {
-    retrievalMode: env.retrievalMode, retrievedChunks: results.length,
-    contextSources: telemetry.contextSources, status: response.status,
-    validation: telemetry.validation, validationReason: telemetry.validationReason,
-    finishReason: telemetry.finishReason,
-  });
-  return response;
+export function createQuestionAnswerer(dependencies: {
+  namespace?: typeof getQueryCacheNamespace;
+  search?: typeof searchDocuments;
+  generate?: typeof answerUsingEvidence;
+} = {}): (question: string) => Promise<ChatResponse> {
+  return async (question) => {
+    const normalized = validateSearch(question, RAG_CONFIG.maxContextChunks);
+    const namespace = await (dependencies.namespace ?? getQueryCacheNamespace)();
+    return ragResponses.getOrLoad(queryCacheKey(namespace, normalized), async () => {
+      const results = await (dependencies.search ?? searchDocuments)(normalized, RAG_CONFIG.maxContextChunks, namespace);
+      const { response, telemetry } = await (dependencies.generate ?? answerUsingEvidence)(normalized, results);
+      if (env.ragDiagnostics) console.info("[rag]", {
+        retrievalMode: env.retrievalMode, retrievedChunks: results.length,
+        contextSources: telemetry.contextSources, status: response.status,
+        validation: telemetry.validation, validationReason: telemetry.validationReason,
+        finishReason: telemetry.finishReason,
+      });
+      return response;
+    }, (response) => response.status !== "error" && response.reason !== "index-not-ready" && response.reason !== "context-unavailable");
+  };
 }
+
+export const answerQuestion = createQuestionAnswerer();

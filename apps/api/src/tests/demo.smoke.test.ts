@@ -8,6 +8,8 @@ import path from "node:path";
 import { memoryBudget } from "../middleware/rate-limit.js";
 import { reserveGeminiCall, UsageLimitError } from "../services/usage-service.js";
 import { loadCorpus } from "../services/corpus-service.js";
+import { TtlCache } from "../utils/ttl-cache.js";
+import type { ChatResponse } from "@playable-factory/shared";
 
 test("portfolio API smoke: auth, health, permissions, bounded chat/search and CORS", async (t) => {
   env.databaseUrl = "postgresql://unused:unused@127.0.0.1:1/portfolio_demo";
@@ -109,6 +111,26 @@ test("portfolio API smoke: auth, health, permissions, bounded chat/search and CO
         const response = await fetch(`http://127.0.0.1:${(closed.address() as AddressInfo).port}/api/auth/demo`, { method: "POST" });
         assert.equal(response.status, 503);
       } finally { await new Promise<void>((resolve) => closed.close(() => resolve())); }
+    });
+    await t.test("cached answers still require JWT authorization and consume the IP request quota", async () => {
+      const responses = new TtlCache<ChatResponse>({ maxEntries: 2, maxBytes: 1000, ttlMs: 10000 });
+      let work = 0;
+      const cachedApp = createApp({ consume: memoryBudget(), answer: (question) => responses.getOrLoad(question, async () => {
+        work += 1;
+        return { answered: false, answer: "No evidence", sources: [] };
+      }) }).listen(0, "127.0.0.1");
+      await once(cachedApp, "listening");
+      const origin = `http://127.0.0.1:${(cachedApp.address() as AddressInfo).port}`;
+      const request = (authorized: boolean) => fetch(`${origin}/api/chat`, { method: "POST",
+        headers: { "Content-Type": "application/json", ...(authorized ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ question: "Same question?" }) });
+      try {
+        assert.equal((await request(false)).status, 401);
+        for (let index = 0; index < 5; index++) assert.equal((await request(true)).status, 200);
+        assert.equal((await request(false)).status, 401);
+        assert.equal((await request(true)).status, 429);
+        assert.equal(work, 1);
+      } finally { await new Promise<void>((resolve) => cachedApp.close(() => resolve())); }
     });
     await t.test("only explicitly selected synthetic documents are loaded", async () => {
       validateDemoEnvironment();

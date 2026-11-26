@@ -7,6 +7,7 @@ import { EMBEDDING_CONFIG, RETRIEVAL_CONFIG, type RetrievalMode } from "../confi
 import { generateEmbedding } from "./embedding-service.js";
 import { balanceRankings, fuseRankings, validateSearch } from "./retrieval-ranking.js";
 import { DEMO_PATHS } from "./demo-service.js";
+import { getQueryCacheNamespace } from "./query-cache.js";
 
 const compatibleIndex = and(
   eq(documents.status, "INDEXED"),
@@ -83,7 +84,8 @@ export async function searchDocumentsDense(
   limit: number = RETRIEVAL_CONFIG.defaultTopK,
 ): Promise<SearchResult[]> {
   const normalized = validateSearch(query, limit);
-  const embedding = await generateEmbedding(normalized, { type: "query" });
+  const cacheNamespace = await getQueryCacheNamespace();
+  const embedding = await generateEmbedding(normalized, { type: "query", cacheNamespace });
   return retrieveWithEmbedding(normalized, embedding, limit, "dense");
 }
 
@@ -93,7 +95,8 @@ export async function searchDocumentsHybrid(
   limit: number = RETRIEVAL_CONFIG.defaultTopK,
 ): Promise<SearchResult[]> {
   const normalized = validateSearch(query, limit);
-  const embedding = await generateEmbedding(normalized, { type: "query" });
+  const cacheNamespace = await getQueryCacheNamespace();
+  const embedding = await generateEmbedding(normalized, { type: "query", cacheNamespace });
   return retrieveWithEmbedding(normalized, embedding, limit, "hybrid");
 }
 
@@ -101,8 +104,10 @@ export async function searchDocumentsHybrid(
 export async function searchDocuments(
   query: string,
   limit: number = RETRIEVAL_CONFIG.defaultTopK,
+  namespace?: string,
 ): Promise<SearchResult[]> {
   const normalized = validateSearch(query, limit);
-  const embedding = await generateEmbedding(normalized, { type: "query" });
+  const cacheNamespace = namespace ?? await getQueryCacheNamespace();
+  const embedding = await generateEmbedding(normalized, { type: "query", cacheNamespace });
   return retrieveWithEmbedding(normalized, embedding, limit, env.retrievalMode);
 }

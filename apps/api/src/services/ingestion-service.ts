@@ -11,6 +11,7 @@ import { createChecksum, indexingFingerprint, isIndexCurrent } from "./indexing-
 import { sleep } from "../utils/async.js";
 import { assertDemoDatabase } from "./demo-service.js";
 import { logFailure } from "../utils/log.js";
+import { invalidateQueryCaches } from "./query-cache.js";
 
 export interface IngestionResult {
   runId: number;
@@ -59,6 +60,7 @@ export async function indexDocument(
       await tx.delete(documentChunks).where(eq(documentChunks.documentId, document.id));
       await tx.insert(documentChunks).values(prepared.map((chunk) => ({ documentId: document.id, ...chunk })));
     });
+    invalidateQueryCaches();
     return "indexed";
   } catch (error) {
     const errorMessage = "Document indexing failed; previous content was retained";

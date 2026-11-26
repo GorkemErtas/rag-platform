@@ -54,6 +54,11 @@ export const env = {
   trustProxyHops: process.env.TRUST_PROXY_HOPS === "1" ? 1 : 0,
   demoDailyCallLimit: integer("DEMO_DAILY_GEMINI_CALL_LIMIT", 100, 1000),
   demoMinuteCallLimit: integer("DEMO_MINUTE_GEMINI_CALL_LIMIT", 10, 30),
+  embeddingCacheTtlMs: integer("QUERY_EMBEDDING_CACHE_TTL_MS", 900000, 3600000),
+  embeddingCacheMaxEntries: integer("QUERY_EMBEDDING_CACHE_MAX_ENTRIES", 128, 512),
+  ragCacheTtlMs: integer("RAG_RESPONSE_CACHE_TTL_MS", 300000, 1800000),
+  ragCacheMaxEntries: integer("RAG_RESPONSE_CACHE_MAX_ENTRIES", 32, 128),
+  ragDiagnostics: process.env.RAG_DIAGNOSTICS === "true",
 };
 
 export function validateServerEnvironment(): void {
