@@ -7,7 +7,12 @@ operator-approved steps.
 
 ## Service configuration
 
-Create two services from the same reviewed Git commit. Keep **Root Directory
+Keep exactly three Railway services: **web**, **api**, and **postgres**. Gemini
+clients, query embedding, retrieval, generation and application caches all run
+inside the API. Do not create a separate AI worker or MCP container. The optional
+MCP stdio client remains a local tool that calls the existing API search route.
+
+Create the two application services from the same reviewed Git commit. Keep **Root Directory
 set to `/` for both**, so pnpm can resolve workspace packages and the lockfile.
 Set each service's Config File path explicitly; Railway does not resolve this
 path relative to the service root. See the official
@@ -24,6 +29,8 @@ path relative to the service root. See the official
 | Production start, from `/app` | `node apps/api/dist/index.js` | `node apps/web/server.js` |
 | Deployment health check | `/health/ready` | `/health` |
 | Health timeout / replicas | 120 seconds / 1 | 120 seconds / 1 |
+| Serverless | `sleepApplication = true` | `sleepApplication = true` |
+| Runtime CPU / RAM ceiling | 0.5 vCPU / 512 MiB | 0.5 vCPU / 512 MiB |
 
 The Dockerfiles supply Node 22 and pnpm 10.34.5. The API runtime installs
 production dependencies only. The web runtime contains Next.js standalone
@@ -33,9 +40,78 @@ not a source file. Do not replace it with `next dev` or `tsx watch`.
 API and web bind to `0.0.0.0` and read Railway's injected `PORT`. Leave `PORT`
 unset unless a fixed port is deliberately configured; the public domain's
 target port must match it. `HOSTNAME=0.0.0.0` is supplied by the web image.
-Railway checks the configured endpoint while promoting a deployment; set up
-external uptime monitoring separately. See
+Railway checks the configured endpoint while promoting a deployment. Do not add
+periodic uptime pings, cron requests or browser keep-alive calls for this demo:
+their responses can prevent sleeping. Use deployment health checks and on-demand
+diagnostics. See
 [Railway health checks](https://docs.railway.com/deployments/healthchecks).
+
+## Low-traffic serverless and resource configuration
+
+Both application TOML files set `deploy.sleepApplication = true`, keep one
+replica, and set `deploy.limitOverride.containers.cpu = 0.5` and
+`memoryBytes = 536870912`. These are runtime ceilings; production builds run in
+the build stage. The existing start commands and health check paths stay in place.
+
+| Service | Serverless | Suggested runtime ceiling | Persistent storage |
+| --- | --- | --- | --- |
+| Web | On | 0.5 vCPU, 512 MiB RAM | None |
+| API | On | 0.5 vCPU, 512 MiB RAM | None; caches are disposable |
+| PostgreSQL/pgvector | **Off** | 1 vCPU, 1 GiB RAM | Existing database volume and backups |
+
+Configure the PostgreSQL ceiling manually in its Railway service settings and
+leave its Serverless switch off. No database resource is modified by this branch.
+These are conservative starting ceilings for the three-document demo, not measured
+Linux memory guarantees. Verify cold-start and ingestion peak RSS/CPU after review;
+increase RAM if there are OOM restarts rather than removing safeguards. A ceiling
+does not reserve that much memory or promise a fixed monthly cost. See
+[Railway cost controls](https://docs.railway.com/pricing/cost-control).
+
+Railway currently detects inactivity from outbound traffic after at least five
+minutes; the first request wakes a sleeping service and can be slower or return
+a transient 502. The setting takes effect on a newly deployed container, so these
+files do not change a running service until an approved deployment. No automatic
+chat retry or synthetic traffic is added. Avoid static outbound IPs and telemetry
+agents that keep emitting traffic. See
+[Railway Serverless](https://docs.railway.com/deployments/serverless).
+
+The web image already disables Next telemetry. No application polling, cache
+sweep timer, warm-up loop, or self health request runs in the background. The
+ingestion advisory-lock check runs only during explicit ingestion and remains
+necessary for safe indexing. RAG request summaries are off by default; set
+`RAG_DIAGNOSTICS=true` temporarily when debugging. Sanitized error logs remain.
+
+### PostgreSQL connections and idle memory
+
+The API lazily opens at most **three** connections per process, keeps no minimum,
+closes idle connections after **5,000 ms**, and disables client TCP keep-alive.
+`allowExitOnIdle=true` releases pool event-loop references; the HTTP listener keeps
+the API running until Railway sleeps it or sends SIGTERM. Existing 5-second
+connection/statement timeouts remain. There are no database heartbeat queries.
+
+Use `DATABASE_POOL_MAX=3` and `DATABASE_IDLE_TIMEOUT_MS=5000`. The pool minimum
+allowed maximum is two because ingestion/initialization can hold a lock connection
+while issuing another query. For a single low-traffic service, do not increase the
+pool to the PostgreSQL connection limit. Allow room for rolling overlap (two API
+replicas during promotion), CLI ingestion/migrations and operator connections.
+See [node-postgres pooling](https://node-postgres.com/apis/pool).
+
+For the dedicated PG16 demo database, optional conservative PostgreSQL settings
+are `max_connections=20`, `shared_buffers=128MB`, `work_mem=4MB`, and
+`maintenance_work_mem=64MB`. If your chosen image is the documented
+`pgvector/pgvector:pg16`, its reviewed start command can be:
+
+```sh
+postgres -c max_connections=20 -c shared_buffers=128MB -c work_mem=4MB -c maintenance_work_mem=64MB
+```
+
+Apply those settings only through a reviewed database service change. Keep the
+volume, `PGDATA`, WAL durability, autovacuum and backups intact. Do not reset the
+database or disable vacuum/fsync to reduce idle usage. The database remains
+persistent and awake while web/API may sleep. The proposed values are starting
+settings for this small corpus; PostgreSQL documents their memory and connection
+tradeoffs in [PG16 resource consumption](https://www.postgresql.org/docs/16/runtime-config-resource.html)
+and [connection settings](https://www.postgresql.org/docs/16/runtime-config-connection.html).
 
 Local production equivalents, from the monorepo root:
 
@@ -73,10 +149,21 @@ command-line arguments, screenshots, or logs.
 | `GEMINI_CHAT_MODEL` | Explicit model supported by your key; confirm availability before release rather than assuming the existing code default is available |
 | `RETRIEVAL_MODE` | `hybrid` (default), `dense`, or `rrf` |
 | `TRUST_PROXY_HOPS` | `1` when public traffic reaches the API exclusively through Railway's direct edge proxy; otherwise `0` |
-| `DEMO_DAILY_GEMINI_CALL_LIMIT` | `100` by default, integer 1–1000 |
-| `DEMO_MINUTE_GEMINI_CALL_LIMIT` | `10` by default, integer 1–30 |
+| `DEMO_DAILY_GEMINI_CALL_LIMIT` | `40` by default, integer 1–1000 |
+| `DEMO_MINUTE_GEMINI_CALL_LIMIT` | `6` by default, integer 1–30 |
+| `DATABASE_POOL_MAX` | `3` by default, integer 2–10; `min=0` connections are retained |
+| `DATABASE_IDLE_TIMEOUT_MS` | `5000` by default, integer 1000–30000 |
+| `QUERY_EMBEDDING_CACHE_TTL_MS` | `900000` (15 minutes), integer 1–3600000 |
+| `QUERY_EMBEDDING_CACHE_MAX_ENTRIES` | `128`, integer 1–512; also capped at 2 MiB of stored key/value payloads |
+| `RAG_RESPONSE_CACHE_TTL_MS` | `300000` (5 minutes), integer 1–1800000 |
+| `RAG_RESPONSE_CACHE_MAX_ENTRIES` | `32`, integer 1–128; also capped at 2 MiB of stored key/value payloads |
+| `RAG_DIAGNOSTICS` | `false` by default; set `true` only for temporary RAG request summaries |
 | `MCP_SERVICE_TOKEN` | Optional private random token, at least 32 characters; leave unset if unused |
 | `JWT_EXPIRES_IN` | Normal account sessions only; demo sessions always expire after 15 minutes |
+
+Existing Railway variables override code defaults. When approving this change,
+explicitly update any old `100`/`10` Gemini quota values to **40/day** and
+**6/minute**. Persistent counters are retained; no quota reset is performed.
 
 Generate a secret locally and transfer it directly to the service's private
 variables; do not commit or share its output:
@@ -237,8 +324,10 @@ explicit re-ingestion; incompatible vectors are excluded from retrieval.
   per minute per process. Local non-demo development uses in-memory counters.
 - Every Gemini SDK request reserves a shared minute and UTC-day allowance in
   PostgreSQL first, including failed calls and CLI ingestion. Defaults are
-  10/minute and 100/day. A chat uses at most one query embedding and one generation;
-  a search uses one embedding. Quota reservations are conservative and are not
+  6/minute and 40/day. A cache-miss chat uses at most one query embedding and one
+  generation; a cache-miss search uses one embedding. Cache hits skip the relevant
+  provider calls but still require auth and consume the HTTP request quota.
+  Quota reservations are conservative and are not
   refunded. Store failures block requests instead of permitting unmetered calls.
 - Demo SDK retries and embedding retries are disabled. Provider requests have a
   15-second timeout, generation is limited to 1,024 output tokens, retrieved
@@ -256,6 +345,52 @@ The call cap bounds application requests, not a promised currency amount.
 Configure provider-side quotas/spending controls on a dedicated key as an
 additional operator control. No live model quality or account availability is
 claimed by offline smoke tests.
+
+## Bounded embedding and RAG caches
+
+Both caches live only in the API process. Default query embedding TTL is 15
+minutes/128 entries and response TTL is 5 minutes/32 entries. Each cache also caps
+stored key/value payloads at 2 MiB, with small bounded bookkeeping overhead.
+Entries expire from insertion time; reads do not extend TTL. Least-recently-used
+entries are evicted when full and oversized entries are skipped. Expiration is
+lazy, so no background timer or traffic keeps the service awake. Restart/sleep
+may discard caches; persistent quotas and the index remain in PostgreSQL.
+
+Concurrent identical misses share one in-flight computation, whose tracking is
+also bounded. Cached values are defensively copied, failures are not retained,
+and invalid-grounding/temporary empty-index responses are not cached. Valid
+evidence-based abstentions can be cached. Document embeddings and measured
+evaluation callbacks bypass caching; retrieval ranking, top-K, context size and
+citation validation are unchanged.
+
+Before using a cache, every chat/search reads a compact ordered fingerprint of
+the selected corpus's **published document metadata** from PostgreSQL: IDs,
+paths, titles, status, content checksums, indexing fingerprints, models,
+dimensions and publication timestamps. That fingerprint and the database/corpus,
+demo mode, embedding/chat model, normalization/chunking profile, retrieval mode,
+and generation/context settings scope the cache keys. Questions match exactly
+after trimming outer whitespace; no lowercasing, fuzzy matching or query rewriting
+is performed.
+
+Successful atomic ingestion clears local caches after commit. A CLI or another
+process publishing changed/added/deleted documents changes the on-demand
+fingerprint and invalidates both caches on the next request. No new migration,
+PostgreSQL notification listener or revision polling is required. In-flight work
+cannot refill a cache that was invalidated. Model/environment changes require a
+service restart as usual and use a separate namespace. Changing the embedding
+model still requires explicit ingestion of compatible vectors.
+
+Only the existing ingestion path should publish corpus changes: it updates
+checksums/publication metadata in the same transaction as chunks. For a manual
+SQL repair that bypasses that metadata, restart the API after committing the
+repair. Source-file edits become searchable only after explicit ingestion.
+
+Cache keys are hashes; no question, vector, answer, JWT or secret is logged by
+the cache. Responses contain only the shared authorized corpus context, so
+USER/ADMIN token data are not stored in cache entries. Authentication, exact
+CORS checks and all per-IP quotas run **before** cache lookup. A database revision
+read failure does not serve an old cached answer. If per-document/user ACLs are
+introduced later, their permission scope must also be added to the keys.
 
 ## Health and release smoke checks
 
@@ -344,7 +479,40 @@ Rotate JWT/MCP/Gemini secrets if exposure is suspected; JWT rotation invalidates
 current sessions. This implementation has not performed any rollback or resource
 operation.
 
-## Audit and verification record — 25 November 2026
+## Low-traffic optimization verification — 25 November 2026
+
+Branch `codex/railway-low-traffic` starts from fetched `origin/main` commit
+`85ebf88`, which already contains the security preparation. During implementation,
+no merge, Railway deployment, database setting change, migration or ingestion was
+performed. No new dependency or database migration is needed.
+
+| Command/check | Result |
+| --- | --- |
+| `pnpm test` | 49 passed, 2 PostgreSQL integration tests skipped without `TEST_DATABASE_URL` |
+| `pnpm lint` | API and web passed |
+| `pnpm build` with the public test environment above | Shared, API, local MCP package and Next production builds passed; MCP is not deployed |
+| `pnpm test:smoke:api` | Passed: compiled PORT/health/readiness, safe startup failure and refused production seeding |
+| `pnpm test:smoke:web` | Passed: standalone PORT/health/demo/assets/headers/client secret markers |
+| `git diff --check` | Passed |
+| Live pgvector/idle sockets, Railway sleep/wake, Linux container resource peaks | Not measured: no isolated test DB; Docker Desktop engine unavailable; Railway resources left unchanged |
+
+New offline tests cover absolute TTL expiry, LRU/byte/in-flight bounds, defensive
+copies, request coalescing, failure retries, invalidation during in-flight work,
+corpus/model/scope changes, real SDK request avoidance using mocked fetch,
+unchanged citation validation, evaluation bypass, and authorization/rate limits on
+cached answers. Optional PostgreSQL tests additionally verify published revision
+changes, bounded pool concurrency, closing idle connections and reconnecting on
+demand. Those database assertions remain unexecuted until `TEST_DATABASE_URL` is
+provided for a disposable pgvector database.
+
+Before approving release: run both database integrations and Linux image builds;
+verify the configured 512 MiB application ceilings under cold start and ingestion;
+configure PostgreSQL Serverless **off**, its persistent volume/backups, and the
+suggested 1 GiB ceiling; set existing Gemini variables to 40/6; then verify actual
+sleep/wake without uptime pings and that cache hits/reindexing behave correctly.
+Changing service settings or deploying this branch still requires review.
+
+## Initial security preparation — 25 November 2026
 
 Local checks ran on Windows with Node 26.13.0 and pnpm 10.34.5. Linux container
 checks with the images' Node 22 runtime remain a required release gate.

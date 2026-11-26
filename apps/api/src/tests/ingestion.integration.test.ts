@@ -21,6 +21,7 @@ test("atomic reindex, rollback, unchanged skip, retry and no duplicates", {
     await admin.query(`create schema ${schema}`);
     isolated = new Pool({ connectionString: process.env.TEST_DATABASE_URL, options: `-c search_path=${schema},public`, connectionTimeoutMillis: 5000 });
     const database = drizzle(isolated);
+    const { readIndexRevision } = await import("../services/query-cache.js");
     await isolated.query(`
       create table documents (
         id serial primary key, path text unique not null, title text, checksum text,
@@ -39,9 +40,11 @@ test("atomic reindex, rollback, unchanged skip, retry and no duplicates", {
     const embed = async () => { calls += 1; return vector; };
     const source = { path: "test.md", title: "Test", content: "Old searchable facts." };
     assert.equal(await indexDocument(source, database, embed, 0), "indexed");
+    const originalRevision = await readIndexRevision(isolated);
     const [old] = await database.select().from(documents);
     assert.equal(await indexDocument(source, database, embed, 0), "skipped");
     assert.equal(calls, 1);
+    assert.equal(await readIndexRevision(isolated), originalRevision);
 
     const changed = { ...source, content: "Replacement facts." };
     await assert.rejects(indexDocument(changed, database, async () => {
@@ -55,6 +58,7 @@ test("atomic reindex, rollback, unchanged skip, retry and no duplicates", {
     assert.equal(afterFailure.status, "INDEXED");
     assert.equal(afterFailure.checksum, old.checksum);
     assert.equal(afterFailure.indexedAt?.toISOString(), old.indexedAt?.toISOString());
+    assert.equal(await readIndexRevision(isolated), originalRevision);
 
     // A DB insert error after deletion must roll back both chunks and metadata.
     await assert.rejects(indexDocument(changed, database, async () => [1, 0], 0));
@@ -66,6 +70,7 @@ test("atomic reindex, rollback, unchanged skip, retry and no duplicates", {
     assert.equal((await database.select().from(documentChunks)).length, 1);
     assert.equal((await database.select().from(documentChunks))[0].content, changed.content);
     assert.equal((await database.select().from(documents))[0].errorMessage, null);
+    assert.notEqual(await readIndexRevision(isolated), originalRevision);
     await database.update(documents).set({ indexingFingerprint: "stale" }).where(eq(documents.id, old.id));
     assert.equal(await indexDocument(changed, database, embed, 0), "indexed");
   } finally {

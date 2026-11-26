@@ -8,9 +8,12 @@ if (!env.databaseUrl) {
 
 export const pool = new Pool({
   connectionString: env.databaseUrl,
-  max: 10,
+  max: env.databasePoolMax,
+  min: 0,
   connectionTimeoutMillis: 5000,
-  idleTimeoutMillis: 10000,
+  idleTimeoutMillis: env.databaseIdleTimeoutMs,
+  allowExitOnIdle: true,
+  keepAlive: false,
   statement_timeout: 5000,
 });
 

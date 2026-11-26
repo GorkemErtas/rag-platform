@@ -7,9 +7,9 @@ export const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 // Production uses service variables only; never load a developer's root secrets.
 if (process.env.NODE_ENV !== "production") config({ path: path.join(rootDir, ".env"), quiet: true });
 
-function integer(name: string, fallback: number, max: number): number {
+function integer(name: string, fallback: number, max: number, min = 1): number {
   const value = Number(process.env[name] ?? fallback);
-  if (!Number.isSafeInteger(value) || value < 1 || value > max) throw new Error(`Invalid ${name}`);
+  if (!Number.isSafeInteger(value) || value < min || value > max) throw new Error(`Invalid ${name}`);
   return value;
 }
 
@@ -52,8 +52,15 @@ export const env = {
   corsOrigin:
   process.env.CORS_ORIGIN ?? "http://localhost:3000",
   trustProxyHops: process.env.TRUST_PROXY_HOPS === "1" ? 1 : 0,
-  demoDailyCallLimit: integer("DEMO_DAILY_GEMINI_CALL_LIMIT", 100, 1000),
-  demoMinuteCallLimit: integer("DEMO_MINUTE_GEMINI_CALL_LIMIT", 10, 30),
+  demoDailyCallLimit: integer("DEMO_DAILY_GEMINI_CALL_LIMIT", 40, 1000),
+  demoMinuteCallLimit: integer("DEMO_MINUTE_GEMINI_CALL_LIMIT", 6, 30),
+  databasePoolMax: integer("DATABASE_POOL_MAX", 3, 10, 2),
+  databaseIdleTimeoutMs: integer("DATABASE_IDLE_TIMEOUT_MS", 5000, 30000, 1000),
+  embeddingCacheTtlMs: integer("QUERY_EMBEDDING_CACHE_TTL_MS", 900000, 3600000),
+  embeddingCacheMaxEntries: integer("QUERY_EMBEDDING_CACHE_MAX_ENTRIES", 128, 512),
+  ragCacheTtlMs: integer("RAG_RESPONSE_CACHE_TTL_MS", 300000, 1800000),
+  ragCacheMaxEntries: integer("RAG_RESPONSE_CACHE_MAX_ENTRIES", 32, 128),
+  ragDiagnostics: process.env.RAG_DIAGNOSTICS === "true",
 };
 
 export function validateServerEnvironment(): void {

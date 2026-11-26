@@ -3,6 +3,7 @@ import { env } from "../config/env.js";
 import { EMBEDDING_CONFIG } from "../config/constants.js";
 import { sleep } from "../utils/async.js";
 import { reserveGeminiCall } from "./usage-service.js";
+import { queryEmbeddings, queryCacheKey } from "./query-cache.js";
 
 let ai: GoogleGenAI | undefined;
 
@@ -13,6 +14,8 @@ interface GenerateEmbeddingOptions {
   title?: string;
   /** Evaluation instrumentation; includes retries, never changes ranking. */
   onRequest?: () => void;
+  /** Supplied only by retrieval after reading the published index revision. */
+  cacheNamespace?: string;
 }
 
 export function normalizeEmbedding(values: number[]): number[] {
@@ -137,22 +140,25 @@ export async function generateEmbedding(
     );
   }
 
-  const response = await requestEmbedding(
-    normalizedText,
-    options,
-  );
+  const load = async () => {
+    const response = await requestEmbedding(normalizedText, options);
 
-  const embedding = response.embeddings?.[0]?.values;
+    const embedding = response.embeddings?.[0]?.values;
 
-  if (!embedding || embedding.length === 0) {
-    throw new Error("Gemini returned no embedding");
+    if (!embedding || embedding.length === 0) {
+      throw new Error("Gemini returned no embedding");
+    }
+
+    if (embedding.length !== EMBEDDING_CONFIG.dimensions) {
+      throw new Error(`Unexpected embedding dimension: ${embedding.length}`);
+    }
+
+    return normalizeEmbedding(embedding);
+  };
+  // Document indexing and instrumented evaluation always use the provider path.
+  if (options.type === "query" && options.cacheNamespace && !options.onRequest) {
+    const scope = JSON.stringify([options.cacheNamespace, env.geminiEmbeddingModel, EMBEDDING_CONFIG.dimensions]);
+    return queryEmbeddings.getOrLoad(queryCacheKey(scope, normalizedText), load);
   }
-
-  if (embedding.length !== EMBEDDING_CONFIG.dimensions) {
-    throw new Error(
-      `Unexpected embedding dimension: ${embedding.length}`,
-    );
-  }
-
-  return normalizeEmbedding(embedding);
+  return load();
 }
