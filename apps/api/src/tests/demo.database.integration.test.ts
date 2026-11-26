@@ -3,9 +3,10 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { test } from "node:test";
 import { Pool } from "pg";
+import { setTimeout as delay } from "node:timers/promises";
 import { env, rootDir } from "../config/env.js";
 
-test("demo identity refuses existing data and PostgreSQL quotas are atomic across connections", {
+test("demo identity, atomic PostgreSQL quotas, and demand-only pool connections", {
   skip: !process.env.TEST_DATABASE_URL && "Set TEST_DATABASE_URL to an isolated PostgreSQL database",
 }, async () => {
   const url = new URL(process.env.TEST_DATABASE_URL!);
@@ -43,11 +44,16 @@ test("demo identity refuses existing data and PostgreSQL quotas are atomic acros
     const { consumeBudget } = await import("../services/usage-service.js");
     const results = await Promise.all(Array.from({ length: 25 }, () => consumeBudget("atomic-test", 3, 86400000)));
     assert.equal(results.filter(Boolean).length, 3);
+    assert.ok(pool.totalCount <= env.databasePoolMax);
     const persisted = await otherConnection.query("select used from request_budgets where key = 'atomic-test'");
     assert.equal(persisted.rows[0].used, 3);
     assert.equal(await consumeBudget("atomic-test", 3, 86400000), false);
     await pool.query("insert into documents (path) values ('original-case-study.md')");
     await assert.rejects(assertDemoDatabase(), /different corpus/);
+    await delay(env.databaseIdleTimeoutMs + 100);
+    assert.equal(pool.totalCount, 0, "idle API connections should be closed so outbound DB traffic stops");
+    await pool.query("select 1");
+    assert.equal(pool.totalCount, 1, "a new request should reconnect on demand");
   } finally {
     await pool.end();
     await otherConnection.end();
